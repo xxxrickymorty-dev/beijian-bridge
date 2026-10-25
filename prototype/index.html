@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="icon" href="data:,">
 <title>编梁 · 北涧桥 — 交互原型</title>
 <style>
@@ -26,12 +26,15 @@
     -webkit-font-smoothing:antialiased;
   }
   #app{position:fixed;inset:0;}
+  #app canvas{touch-action:none;}
+  html,body{overscroll-behavior:none;}
   #vig{position:fixed;inset:0;z-index:2;pointer-events:none;
     background:radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 55%, rgba(10,7,5,.22) 100%);}
   canvas{display:block;}
 
   header{
-    position:fixed;top:0;left:0;right:0;padding:22px 30px 0;
+    position:fixed;top:0;left:0;right:0;
+    padding:max(22px, env(safe-area-inset-top)) max(30px, env(safe-area-inset-right)) 0 max(30px, env(safe-area-inset-left));
     display:flex;align-items:flex-start;gap:16px;pointer-events:none;z-index:5;
     background:linear-gradient(to bottom, rgba(10,14,14,.55), rgba(10,14,14,0));
   }
@@ -47,7 +50,10 @@
   .tool:hover{color:var(--ink);border-color:rgba(233,223,205,.4);}
 
   #hud{
-    position:fixed;left:30px;bottom:30px;z-index:5;width:340px;max-width:calc(100vw - 60px);
+    position:fixed;
+    left:max(30px, env(safe-area-inset-left));
+    bottom:max(30px, env(safe-area-inset-bottom));
+    z-index:5;width:340px;max-width:calc(100vw - 60px);
     pointer-events:none;
     background:rgba(12,16,15,.55);padding:14px 16px 15px;border-radius:3px;
   }
@@ -75,7 +81,7 @@
     opacity:0;transition:opacity .18s;
   }
   #tip.show{opacity:1;}
-  #autoBtn{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;display:none;}
+  #autoBtn{position:fixed;left:50%;bottom:max(34px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;display:none;}
   #autoBtn.show{display:block;}
 
   #legend{
@@ -88,7 +94,10 @@
   #legend .note{display:block;margin-top:10px;font-size:9.5px;letter-spacing:.08em;color:#5e554a;}
 
   #views{
-    position:fixed;right:30px;bottom:30px;z-index:6;
+    position:fixed;
+    right:max(30px, env(safe-area-inset-right));
+    bottom:max(30px, env(safe-area-inset-bottom));
+    z-index:6;
     display:none;align-items:center;gap:4px;flex-wrap:wrap;
     background:rgba(20,17,15,.72);border:1px solid var(--line);
     padding:8px 10px;border-radius:2px;
@@ -115,7 +124,7 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   #cta{
-    position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;
+    position:fixed;left:50%;bottom:max(34px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;
     opacity:0;pointer-events:none;transition:.3s;
   }
   #cta.show{opacity:1;pointer-events:auto;}
@@ -173,17 +182,28 @@
   }
 
   @media (max-width:760px){
-    header{padding:16px 18px 0;}
-    .brand{font-size:15px;}
-    #hud{left:18px;bottom:20px;width:calc(100vw - 36px);}
+    header{padding-top:max(14px, env(safe-area-inset-top));gap:8px;}
+    .brand{font-size:14px;white-space:nowrap;}
+    .sub{display:none;}
+    .tool{padding:8px 7px;font-size:10.5px;letter-spacing:.03em;white-space:nowrap;}
+    #hud{left:max(14px, env(safe-area-inset-left));bottom:max(16px, env(safe-area-inset-bottom));
+         width:calc(100vw - max(28px, env(safe-area-inset-left) + env(safe-area-inset-right)));
+         padding:12px 14px 13px;}
     .stepname{font-size:19px;}
-    .hint{font-size:12px;max-width:calc(100vw - 40px);}
-    #legend{right:18px;bottom:auto;top:64px;font-size:10px;}
+    .hint{font-size:12px;max-width:calc(100vw - 48px);}
+    .know{max-width:calc(100vw - 58px);}
+    #legend{right:14px;left:auto;bottom:auto;top:calc(max(14px, env(safe-area-inset-top)) + 44px);font-size:10px;padding:8px 10px;}
     #legend .note{display:none;}
-    .card h1{font-size:32px;}
-    .veil{justify-content:center;padding:24px;}
-    #views{left:18px;right:18px;top:150px;bottom:auto;justify-content:center;}
-    #cta{bottom:auto;top:50%;transform:translate(-50%,-50%);}
+    .card h1{font-size:30px;}
+    .veil{justify-content:center;padding:20px;backdrop-filter:none;}  /* 手机上 backdrop-filter 很贵 */
+    #views{left:10px;right:10px;top:auto;bottom:calc(max(16px, env(safe-area-inset-bottom)) + 168px);
+           justify-content:center;padding:9px 8px;}
+    #views button{padding:9px 12px;}
+    #views .vlabel{display:none;}
+    /* 手机上底部被 HUD 占满，自动入卯挪到屏幕中部（与 CTA 同槽：CTA 在动作步出现，自动入卯在拖拽步出现，互斥） */
+    #autoBtn{top:50%;bottom:auto;transform:translate(-50%,-50%);padding:12px 20px;font-size:12.5px;}
+    #cta button{padding:15px 24px;}
+    #toast{top:calc(max(14px, env(safe-area-inset-top)) + 112px);bottom:auto;max-width:92vw;}
   }
 </style>
 </head>
@@ -199,7 +219,7 @@
   <div class="spacer"></div>
   <button class="tool" id="galleryBtn">节点图鉴</button>
   <button class="tool" id="jointBtn">节点 · 开</button>
-  <button class="tool" id="voiceBtn">语音 · 开</button>
+  <button class="tool" id="voiceBtn">语音 · 关</button>
   <button class="tool" id="soundBtn">声音 · 开</button>
 </header>
 
@@ -354,15 +374,34 @@
 
   const camera = new T.PerspectiveCamera(37, innerWidth/innerHeight, 0.1, 300);
   // 默认机位：桥面 6.32、屋脊 11.0+，视线压到水面与廊屋之间，两端桥头屋装得下
-  const HOME_CAM = { pos: [20, 16.5, 84], target: [2, 5.2, 0] };
+  /* 触屏 / 手机检测：性能预算与机位都按它分档 */
+  const COARSE = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
+  /* 横屏：正南 3/4 视角装下全长；竖屏：从东岸斜上方顺桥看，长边退到景深里 */
+  const HOME_LAND = { pos: [20, 16.5, 84], target: [2, 5.2, 0] };
+  const HOME_PORT = { pos: [34, 21, 66], target: [0, 4.8, 0] };     /* 竖屏：拱与楼阁居中的主体构图， fov 44 补一点宽度 */
+  const HOME_CAM = HOME_LAND;
+  function homeCam(){ return (innerWidth / innerHeight < 0.9) ? HOME_PORT : HOME_LAND; }
+  function applyHomeCam(){
+    const h = homeCam();
+    camera.position.set(h.pos[0], h.pos[1], h.pos[2]);
+    controls.target.set(h.target[0], h.target[1], h.target[2]);
+    /* 竖屏视场窄，抬高 fov 补宽度；横屏维持 37 */
+    const f = homeCam() === HOME_PORT ? 44 : 37;
+    if (camera.fov !== f) { camera.fov = f; camera.updateProjectionMatrix(); }
+  }
+  let lastHome = null;
+  function cameraAtHome(h){
+    return camera.position.distanceTo(new T.Vector3(h.pos[0], h.pos[1], h.pos[2])) < 1.5 &&
+           controls.target.distanceTo(new T.Vector3(h.target[0], h.target[1], h.target[2])) < 1.5;
+  }
   camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
 
   const renderer = new T.WebGLRenderer({antialias:true, powerPreference:"high-performance"});
   let qualityScale = 1;
   function applyResolution(){
-    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const dpr = Math.min(devicePixelRatio || 1, COARSE ? 1.5 : 1.5);
     const px = innerWidth * innerHeight * dpr * dpr;
-    const cap = 4.2e6;
+    const cap = COARSE ? 2.6e6 : 4.2e6;   /* 手机帧缓冲减半，阴影与像素由下面分档 */
     const scale = px > cap ? Math.sqrt(cap / px) : 1;
     renderer.setPixelRatio(dpr * scale * qualityScale);
     renderer.setSize(innerWidth, innerHeight);
@@ -380,6 +419,7 @@
 
   const controls = new T.OrbitControls(camera, renderer.domElement);
   controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+  lastHome = homeCam();
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
   controls.enablePan = false;
@@ -398,7 +438,7 @@
   const key = new T.DirectionalLight(0xffd6a8, 2.2);
   key.position.set(16, 24, 18);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(COARSE ? 1024 : 2048, COARSE ? 1024 : 2048);
   key.shadow.camera.left = -34;
   key.shadow.camera.right = 34;
   key.shadow.camera.top = 26;
@@ -509,7 +549,7 @@
     if(env.sun){
       const sun = env.sun;
       sun.castShadow = true;
-      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.mapSize.set(COARSE ? 1024 : 2048, COARSE ? 1024 : 2048);
       sun.shadow.camera.left = -40;
       sun.shadow.camera.right = 40;
       sun.shadow.camera.top = 30;
@@ -779,7 +819,7 @@
   }
 
   /* ---------------------------------------------------------- 状态 */
-  const state = {step:0, started:false, busy:false, dragging:false, active:null, sound:true, voice:true, force:false, mode:'quick', jointFocus:false};
+  const state = {step:0, started:false, busy:false, dragging:false, active:null, sound:true, voice:false, force:false, mode:'quick', jointFocus:false};
   const placed = [];        // {mesh,a,b,z,dir}
   const braces = [];
   let loadBlock = null;
@@ -2039,8 +2079,7 @@
       camera.position.set(0, 8, 72);
       controls.target.set(0, 4.6, 0);
     }else{
-      camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
-      controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+      applyHomeCam();
     }
     controls.update();
     sideBtn.textContent = sideOn ? '复位' : '侧视';
@@ -2194,8 +2233,7 @@
     document.getElementById('intro').classList.add('hide');
     controls.autoRotate = false;
     renderer.domElement.style.cursor = 'grab';
-    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
-    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    applyHomeCam();
     controls.update();
     if(previewGroup){
       const pg = previewGroup;
@@ -2221,8 +2259,7 @@
     document.body.classList.add('playing');
     viewsEl.classList.add('show');
     controls.autoRotate = false;
-    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
-    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    applyHomeCam();
     controls.update();
   });
   window.addEventListener('keydown', function(e){
@@ -2417,8 +2454,7 @@
     state.started = true;
     state.step = steps.length;
     document.body.classList.add('playing');
-    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
-    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    applyHomeCam();
     controls.update();
     document.getElementById('intro').classList.add('hide');
     controls.autoRotate = false;
@@ -2529,6 +2565,10 @@
     camera.updateProjectionMatrix();
     applyResolution();
     canvasRect = renderer.domElement.getBoundingClientRect();
+    /* 用户没自己转过视角时，竖↔横切换跟着换机位 */
+    const h = homeCam();
+    if (h !== lastHome && cameraAtHome(lastHome)) applyHomeCam();
+    lastHome = h;
   });
 
   window.__proto = {camera:camera, controls:controls, state:state, setForce:setForce, archForces:archForces, bridge:bridge, renderer:renderer, scene:scene, preview:function(){ return previewGroup; }};
