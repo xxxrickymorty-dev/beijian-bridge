@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>泰顺廊桥 · 网上作品图谱</title>
+<style>
+  :root{
+    --paper:#F7F2E8;
+    --paper-2:#FFFDF7;
+    --ink:#241C15;
+    --ink-2:#5A4E42;
+    --ink-3:#8C7F70;
+    --line:#DCCFB8;
+    --accent:#A63A2E;
+    --accent-soft:#E8CFC7;
+    --ochre:#C9762F;
+    --teal:#3E5C58;
+    --teal-soft:#D5E0DC;
+    --gold:#B08A3E;
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 28px 90px;}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft);}
+  a:hover{border-bottom-color:var(--accent);}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:.01em;}
+  h1{font-size:40px;line-height:1.25;margin:0 0 14px;}
+  h2{font-size:26px;margin:0 0 6px;}
+  h3{font-size:17px;margin:0 0 8px;}
+  p{margin:0 0 14px;}
+  .sec{padding-top:56px;}
+  .sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:26px;}
+  .sec-num{font-family:var(--serif);font-size:13px;color:var(--accent);letter-spacing:.18em;}
+  .sec-sub{font-size:13px;color:var(--ink-3);margin-left:auto;font-family:var(--sans);}
+
+  /* header */
+  header{padding:64px 0 20px;border-bottom:1px solid var(--line);}
+  .kicker{font-size:12px;letter-spacing:.22em;color:var(--accent);margin-bottom:18px;text-transform:uppercase;}
+  .lede{font-size:17px;color:var(--ink-2);max-width:640px;font-family:var(--serif);line-height:1.9;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);margin:34px 0 0;border:1px solid var(--line);}
+  .stat{background:var(--paper-2);padding:18px 16px;}
+  .stat b{display:block;font-family:var(--serif);font-size:34px;line-height:1.1;color:var(--accent);}
+  .stat span{font-size:12px;color:var(--ink-3);letter-spacing:.04em;}
+
+  /* conclusion */
+  .verdict{background:var(--paper-2);border:1px solid var(--line);border-left:4px solid var(--accent);padding:22px 26px;margin-bottom:22px;}
+  .verdict p:last-child{margin-bottom:0;}
+  .verdict strong{color:var(--accent);}
+  .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .trio div{background:var(--paper-2);border:1px solid var(--line);padding:16px 18px;font-size:13.5px;color:var(--ink-2);}
+  .trio b{display:block;color:var(--ink);margin-bottom:4px;font-size:14px;}
+
+  /* svg map */
+  .figure{background:var(--paper-2);border:1px solid var(--line);padding:18px 14px 10px;margin:0 0 10px;}
+  .figure svg{width:100%;height:auto;display:block;}
+  .cap{font-size:12px;color:var(--ink-3);padding:0 4px 8px;}
+
+  /* distribution */
+  .dist-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;}
+  .barchart{background:var(--paper-2);border:1px solid var(--line);padding:20px 22px;}
+  .brow{display:flex;align-items:center;gap:10px;margin-bottom:11px;font-size:13px;}
+  .brow .lbl{width:78px;flex:none;color:var(--ink-2);}
+  .brow .track{flex:1;background:#EFE6D5;height:16px;position:relative;overflow:hidden;}
+  .brow .fill{height:100%;background:var(--teal);transition:width .4s ease;}
+  .brow .num{width:26px;text-align:right;color:var(--ink-3);font-size:12px;}
+
+  /* timeline */
+  .timeline{background:var(--paper-2);border:1px solid var(--line);padding:22px 22px 16px;position:relative;}
+  .tl-axis{position:relative;height:26px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .tl-tick{position:absolute;bottom:0;font-size:10px;color:var(--ink-3);transform:translateX(-50%);padding-bottom:6px;}
+  .tl-tick::after{content:"";position:absolute;left:50%;bottom:0;width:1px;height:5px;background:var(--line);}
+  .tl-lane{position:relative;height:150px;}
+  .dot{position:absolute;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid var(--paper-2);cursor:default;}
+  .dot:hover{z-index:5;transform:translate(-50%,-50%) scale(1.6);}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--ink-2);margin-top:10px;}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;}
+
+  /* cards */
+  .grp{margin-bottom:34px;}
+  .grp-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .grp-head .tag{font-size:11px;letter-spacing:.1em;background:var(--ink);color:var(--paper);padding:3px 9px;border-radius:2px;}
+  .grp-head .cnt{font-size:12px;color:var(--ink-3);}
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .card{background:var(--paper-2);border:1px solid var(--line);padding:16px 18px;position:relative;}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--teal);opacity:.5;}
+  .card.k-visual::before{background:var(--accent);}
+  .card.k-product::before{background:var(--ochre);}
+  .card.k-arch::before{background:var(--gold);}
+  .card.k-media::before{background:#6E7F8C;}
+  .card h4{font-family:var(--serif);font-size:16px;margin:0 0 4px;font-weight:600;}
+  .card .meta{font-size:11.5px;color:var(--ink-3);margin-bottom:8px;letter-spacing:.02em;}
+  .card p{font-size:13px;color:var(--ink-2);margin:0 0 8px;line-height:1.7;}
+  .card .link{font-size:12px;word-break:break-all;}
+
+  /* model */
+  .model{background:var(--paper-2);border:1px solid var(--line);padding:26px 26px 22px;}
+  .ctrls{display:grid;grid-template-columns:1fr 1fr auto;gap:24px;align-items:end;margin-bottom:8px;}
+  .ctrl label{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:8px;}
+  .ctrl label b{font-family:var(--serif);color:var(--accent);font-size:16px;}
+  input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:4px;background:#E4D8C2;border-radius:2px;outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--paper-2);box-shadow:0 0 0 1px var(--accent);}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--paper-2);}
+  button{font-family:var(--sans);font-size:13px;padding:9px 18px;background:transparent;border:1px solid var(--ink);color:var(--ink);cursor:pointer;border-radius:2px;transition:.18s;}
+  button:hover{background:var(--ink);color:var(--paper);}
+  .weights{font-size:12px;color:var(--ink-3);margin-bottom:18px;}
+  .rank-row{display:grid;grid-template-columns:22px 190px 1fr 44px;gap:10px;align-items:center;margin-bottom:9px;font-size:13px;}
+  .rank-row .idx{font-family:var(--serif);font-size:12px;color:var(--ink-3);text-align:right;}
+  .rank-row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+  .rank-row .nm em{font-style:normal;color:var(--ink-3);font-size:11px;margin-left:5px;}
+  .bar{display:flex;height:18px;background:#F0E8D8;overflow:hidden;}
+  .bar span{height:100%;transition:flex-grow .45s cubic-bezier(.2,.7,.3,1);}
+  .bar .s-t{background:var(--teal);}
+  .bar .s-c{background:var(--accent);}
+  .bar .s-d{background:var(--ochre);}
+  .rank-row .sc{text-align:right;font-family:var(--serif);font-size:14px;color:var(--ink);}
+  .barlegend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);margin:14px 0 0;}
+  .barlegend i{display:inline-block;width:10px;height:10px;margin-right:5px;}
+  #why{background:#FBF6EA;border:1px dashed var(--line);padding:16px 18px;margin-top:18px;font-size:13px;color:var(--ink-2);line-height:1.85;}
+  #why b{color:var(--accent);}
+  .assume{font-size:12px;color:var(--ink-3);margin-top:14px;line-height:1.8;}
+
+  /* gap */
+  .gapbox{border:1px solid var(--line);background:var(--paper-2);padding:20px 24px;margin-bottom:14px;}
+  .gapbox h3{color:var(--accent);}
+  .gapbox ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--ink-2);}
+  .gapbox li{margin-bottom:7px;}
+  .warn{background:#FBF1E6;border:1px solid #E4C9A8;}
+
+  /* method */
+  .method{font-size:12.5px;color:var(--ink-3);line-height:1.95;}
+  .method b{color:var(--ink-2);}
+
+  @media (max-width:860px){
+    .stats,.trio,.cards,.dist-grid{grid-template-columns:1fr;}
+    .ctrls{grid-template-columns:1fr;gap:14px;}
+    .rank-row{grid-template-columns:18px 120px 1fr 38px;}
+    h1{font-size:30px;}
+    .wrap{padding:0 18px 60px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">网络作品普查 · 2026年10月21日</div>
+  <h1>泰顺廊桥 · 网上作品图谱</h1>
+  <p class="lede">问题：网上到底有没有关于泰顺廊桥的网站作品、设计作品？<br>答案：有，而且分四层。但没有一件是「完整网站设计作品集」。</p>
+  <div class="stats">
+    <div class="stat"><b>18</b><span>可核验的作品条目</span></div>
+    <div class="stat"><b>7</b><span>作品类型</span></div>
+    <div class="stat"><b>2000</b><span>最早的民间站点年份</span></div>
+    <div class="stat"><b>1</b><span>站酷上明确的泰顺主题品牌作品</span></div>
+  </div>
+</header>
+
+<!-- 01 -->
+<section class="sec" id="conclusion">
+  <div class="sec-head"><span class="sec-num">01</span><h2>先给结论</h2><span class="sec-sub">三句话</span></div>
+  <div class="verdict">
+    <p><strong>有货，但形态单一。</strong>泰顺廊桥的线上作品，绝大多数是「政府与机构的基建」和「学生的作业」。独立设计师的个人创作极少。</p>
+    <p><strong>技术上很先进，视觉上很薄。</strong>三维激光扫描、数字孪生、AI 烟火识别、VR 全景都已落地。但你在站酷、Behance 上找不到成套的廊桥品牌视觉或网页设计。</p>
+    <p><strong>这恰好是空位。</strong>如果你要做泰顺廊桥的网站或视觉项目，可参考的成品少，可挖的素材多。</p>
+  </div>
+  <div class="trio">
+    <div><b>官方侧 · 强</b>县政府、度假区、非遗中心都有站。内容权威，视觉普通。</div>
+    <div><b>数字侧 · 强</b>数字孪生、拆解交互、全景导览、监管平台。多为内部系统。</div>
+    <div><b>设计侧 · 弱</b>只有城市标识系统、一件站酷参赛作品、若干学生毕设。</div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec" id="map">
+  <div class="sec-head"><span class="sec-num">02</span><h2>作品地图</h2><span class="sec-sub">四层结构 · 从基建到衍生</span></div>
+  <div class="figure">
+    <svg viewBox="0 0 1000 580" role="img" aria-label="泰顺廊桥网络作品四层结构图">
+      <!-- layer 1 -->
+      <rect x="4" y="30" width="992" height="120" rx="8" fill="#EFE6D5" opacity=".55"/>
+      <text x="22" y="78" font-family="serif" font-size="15" fill="#A63A2E">①</text>
+      <text x="22" y="100" font-size="12" fill="#5A4E42">官方 /</text>
+      <text x="22" y="118" font-size="12" fill="#5A4E42">机构站点</text>
+
+      <g>
+        <rect x="150" y="56" width="190" height="64" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="245" y="80" text-anchor="middle" font-size="12.5" fill="#241C15">中国廊桥网</text>
+        <text x="245" y="100" text-anchor="middle" font-size="10.5" fill="#8C7F70">langqiao.net · 2000</text>
+      </g>
+      <g>
+        <rect x="352" y="56" width="190" height="64" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="447" y="80" text-anchor="middle" font-size="12.5" fill="#241C15">廊氡度假区官网</text>
+        <text x="447" y="100" text-anchor="middle" font-size="10.5" fill="#8C7F70">tslbrsr.com · 含虚拟游</text>
+      </g>
+      <g>
+        <rect x="554" y="56" width="190" height="64" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="649" y="80" text-anchor="middle" font-size="12.5" fill="#241C15">非遗网 · 木拱桥专题</text>
+        <text x="649" y="100" text-anchor="middle" font-size="10.5" fill="#8C7F70">ihchina.cn · 国家数字馆</text>
+      </g>
+      <g>
+        <rect x="756" y="56" width="190" height="64" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="851" y="80" text-anchor="middle" font-size="12.5" fill="#241C15">泰顺县政府网</text>
+        <text x="851" y="100" text-anchor="middle" font-size="10.5" fill="#8C7F70">ts.gov.cn · 政策与成果</text>
+      </g>
+
+      <!-- layer 2 -->
+      <rect x="4" y="166" width="992" height="122" rx="8" fill="#D5E0DC" opacity=".5"/>
+      <text x="22" y="216" font-family="serif" font-size="15" fill="#3E5C58">②</text>
+      <text x="22" y="238" font-size="12" fill="#5A4E42">数字</text>
+      <text x="22" y="256" font-size="12" fill="#5A4E42">转译</text>
+
+      <g>
+        <rect x="150" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="210" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">数字孪生</text>
+        <text x="210" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">模型</text>
+        <text x="210" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">浙里办可看</text>
+      </g>
+      <g>
+        <rect x="278" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="338" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">廊桥拆解</text>
+        <text x="338" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">交互程序</text>
+        <text x="338" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">文保内部用</text>
+      </g>
+      <g>
+        <rect x="406" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="466" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">全域全景</text>
+        <text x="466" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">导览系统</text>
+        <text x="466" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">302 个村庄</text>
+      </g>
+      <g>
+        <rect x="534" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="594" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">5G VR</text>
+        <text x="594" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">智慧旅游</text>
+        <text x="594" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">小松坡中心</text>
+      </g>
+      <g>
+        <rect x="662" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="722" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">廊桥监管</text>
+        <text x="722" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">保护应用</text>
+        <text x="722" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">省最佳应用</text>
+      </g>
+      <g>
+        <rect x="790" y="180" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="850" y="214" text-anchor="middle" font-size="11.5" fill="#241C15">木拱桥</text>
+        <text x="850" y="232" text-anchor="middle" font-size="11.5" fill="#241C15">技艺馆 3D</text>
+        <text x="850" y="254" text-anchor="middle" font-size="9.5" fill="#8C7F70">宁德云小镇</text>
+      </g>
+
+      <!-- layer 3 -->
+      <rect x="4" y="302" width="992" height="122" rx="8" fill="#E8CFC7" opacity=".45"/>
+      <text x="22" y="352" font-family="serif" font-size="15" fill="#A63A2E">③</text>
+      <text x="22" y="374" font-size="12" fill="#5A4E42">视觉与</text>
+      <text x="22" y="392" font-size="12" fill="#5A4E42">产品设计</text>
+
+      <g>
+        <rect x="150" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="210" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">城市形象</text>
+        <text x="210" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">标识系统</text>
+        <text x="210" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">2023 启用</text>
+      </g>
+      <g>
+        <rect x="278" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="338" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">旅游品牌</text>
+        <text x="338" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">标识设计</text>
+        <text x="338" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">站酷 · 参赛</text>
+      </g>
+      <g>
+        <rect x="406" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="466" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">有声海报</text>
+        <text x="466" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">北涧桥</text>
+        <text x="466" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">光明网</text>
+      </g>
+      <g>
+        <rect x="534" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="594" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">「廊氡有礼」</text>
+        <text x="594" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">文创系列</text>
+        <text x="594" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">景区在售</text>
+      </g>
+      <g>
+        <rect x="662" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="722" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">文房泰顺</text>
+        <text x="722" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">文房用具</text>
+        <text x="722" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">2023 毕设</text>
+      </g>
+      <g>
+        <rect x="790" y="316" width="120" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="850" y="350" text-anchor="middle" font-size="11.5" fill="#241C15">Duang</text>
+        <text x="850" y="368" text-anchor="middle" font-size="11.5" fill="#241C15">Duang 桥</text>
+        <text x="850" y="390" text-anchor="middle" font-size="9.5" fill="#8C7F70">儿童玩具</text>
+      </g>
+
+      <!-- layer 4 -->
+      <rect x="4" y="438" width="992" height="122" rx="8" fill="#E4E1D6" opacity=".7"/>
+      <text x="22" y="488" font-family="serif" font-size="15" fill="#6E7F8C">④</text>
+      <text x="22" y="510" font-size="12" fill="#5A4E42">影像与</text>
+      <text x="22" y="528" font-size="12" fill="#5A4E42">衍生</text>
+
+      <g>
+        <rect x="150" y="452" width="148" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="224" y="486" text-anchor="middle" font-size="11.5" fill="#241C15">廊桥出海</text>
+        <text x="224" y="504" text-anchor="middle" font-size="11.5" fill="#241C15">AI 视频大赛</text>
+        <text x="224" y="526" text-anchor="middle" font-size="9.5" fill="#8C7F70">130+ 投稿</text>
+      </g>
+      <g>
+        <rect x="308" y="452" width="148" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="382" y="486" text-anchor="middle" font-size="11.5" fill="#241C15">《廊桥遗梦》</text>
+        <text x="382" y="504" text-anchor="middle" font-size="11.5" fill="#241C15">VR 项目</text>
+        <text x="382" y="526" text-anchor="middle" font-size="9.5" fill="#8C7F70">宁财院 2022</text>
+      </g>
+      <g>
+        <rect x="466" y="452" width="148" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="540" y="486" text-anchor="middle" font-size="11.5" fill="#241C15">《虹桥寻梦》</text>
+        <text x="540" y="504" text-anchor="middle" font-size="11.5" fill="#241C15">4K + 三维</text>
+        <text x="540" y="526" text-anchor="middle" font-size="9.5" fill="#8C7F70">国赛一等奖</text>
+      </g>
+      <g>
+        <rect x="624" y="452" width="148" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="698" y="486" text-anchor="middle" font-size="11.5" fill="#241C15">肯恩双子桥</text>
+        <text x="698" y="504" text-anchor="middle" font-size="11.5" fill="#241C15">校园实建</text>
+        <text x="698" y="526" text-anchor="middle" font-size="9.5" fill="#8C7F70">温肯 2021</text>
+      </g>
+      <g>
+        <rect x="782" y="452" width="148" height="92" rx="5" fill="#FFFDF7" stroke="#DCCFB8"/>
+        <text x="856" y="486" text-anchor="middle" font-size="11.5" fill="#241C15">廊桥积木</text>
+        <text x="856" y="504" text-anchor="middle" font-size="11.5" fill="#241C15">虚拟拼装</text>
+        <text x="856" y="526" text-anchor="middle" font-size="9.5" fill="#8C7F70">线上 + 线下</text>
+      </g>
+    </svg>
+  </div>
+  <div class="cap">读法：越往下越接近公众。①② 层是重资产，③④ 层才是「设计作品」。真正的空位在第 ③ 层。</div>
+</section>
+
+<!-- 03 -->
+<section class="sec" id="dist">
+  <div class="sec-head"><span class="sec-num">03</span><h2>两个分布</h2><span class="sec-sub">按类型 · 按时间</span></div>
+  <div class="dist-grid">
+    <div class="barchart">
+      <div class="brow"><span class="lbl">数字转译</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="num">6</span></div>
+      <div class="brow"><span class="lbl">视觉设计</span><span class="track"><span class="fill" style="width:66%"></span></span><span class="num">4</span></div>
+      <div class="brow"><span class="lbl">产品文创</span><span class="track"><span class="fill" style="width:50%"></span></span><span class="num">3</span></div>
+      <div class="brow"><span class="lbl">影像作品</span><span class="track"><span class="fill" style="width:50%"></span></span><span class="num">3</span></div>
+      <div class="brow"><span class="lbl">机构站点</span><span class="track"><span class="fill" style="width:33%"></span></span><span class="num">2</span></div>
+      <div class="brow"><span class="lbl">建筑空间</span><span class="track"><span class="fill" style="width:17%"></span></span><span class="num">1</span></div>
+      <div class="brow"><span class="lbl">图库素材</span><span class="track"><span class="fill" style="width:17%"></span></span><span class="num">1</span></div>
+      <div class="cap" style="margin-top:12px">数字转译的作品最多。视觉设计只有 4 件，其中 2 件还是比赛投稿。<br>注：部分条目跨类计入，七类合计 20，去重后 18。</div>
+    </div>
+    <div class="timeline">
+      <div class="tl-axis">
+        <span class="tl-tick" style="left:2%">2000</span>
+        <span class="tl-tick" style="left:22%">2008</span>
+        <span class="tl-tick" style="left:42%">2014</span>
+        <span class="tl-tick" style="left:62%">2020</span>
+        <span class="tl-tick" style="left:82%">2024</span>
+        <span class="tl-tick" style="left:99%">2026</span>
+      </div>
+      <div class="tl-lane" id="lane"></div>
+      <div class="legend">
+        <span><i style="background:#3E5C58"></i>站点 / 数字</span>
+        <span><i style="background:#A63A2E"></i>视觉 / 产品</span>
+        <span><i style="background:#B08A3E"></i>建筑</span>
+        <span><i style="background:#6E7F8C"></i>影像</span>
+      </div>
+      <div class="cap" style="margin-top:8px">2022 年后明显密集。数字孪生、AI 大赛、VR 项目都集中在这三年。左侧 2000 年那个孤点，是唯一的早期民间站点；此后 14 年没有新作品入表。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec" id="list">
+  <div class="sec-head"><span class="sec-num">04</span><h2>逐条清单</h2><span class="sec-sub">18 条 · 可核验</span></div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">A · 机构站点</span><span class="cnt">2 条</span></div>
+    <div class="cards">
+      <div class="card">
+        <h4>中国廊桥网</h4>
+        <div class="meta">langqiao.net · 2000 年起 · 民间主办</div>
+        <p>泰顺籍大学生钟晓波个人创办「泰顺廊桥网」，后改名中国廊桥网。栏目含廊桥游记、攻略、杂志、视频。浙闽七县的廊桥新闻都在这里汇总。</p>
+        <div class="link"><a href="http://www.langqiao.net" target="_blank" rel="noopener">www.langqiao.net</a></div>
+      </div>
+      <div class="card">
+        <h4>泰顺廊桥—氡泉旅游度假区官网</h4>
+        <div class="meta">tslbrsr.com · 国家级度假区 · 多语言</div>
+        <p>导航里有「虚拟游」栏目。景区、民宿、文创产品、预订一应俱全。有英、韩、日三个语言版本。是目前最完整的一张「泰顺廊桥官网」。</p>
+        <div class="link"><a href="http://www.tslbrsr.com" target="_blank" rel="noopener">www.tslbrsr.com</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">B · 数字转译</span><span class="cnt">6 条</span></div>
+    <div class="cards">
+      <div class="card">
+        <h4>泰顺廊桥数字孪生模型</h4>
+        <div class="meta">县文博馆 · 浙里办可访问</div>
+        <p>已完成北涧桥、溪东桥等多座国保廊桥的毫米级三维采集。游客在「浙里办」可看实景，含空中视角。灾后修复时，靠这套数据把九成打捞构件归位。</p>
+        <div class="link">入口：浙里办 App 内检索</div>
+      </div>
+      <div class="card">
+        <h4>廊桥拆解与组装交互程序</h4>
+        <div class="meta">县文博馆 · 内部使用 · 待开放</div>
+        <p>把三节苗、五节苗的编木逻辑做成可拆可装的交互程序。目前用于文保人员分析结构与辅助修缮。官方称未来向公众开放。</p>
+        <div class="link">未公开 · 可关注后续</div>
+      </div>
+      <div class="card">
+        <h4>泰顺旅游全域全景系统</h4>
+        <div class="meta">县文旅体局 · 全景导览</div>
+        <p>覆盖 19 个乡镇、302 个村庄的全景导览。含廊桥、高速、商户。入口在「泰顺旅游服务」公众号。属于 360° 实拍拼接，不是 3D 建模。</p>
+        <div class="link">入口：泰顺旅游服务 公众号</div>
+      </div>
+      <div class="card">
+        <h4>5G VR 智慧旅游</h4>
+        <div class="meta">小松坡游客中心 · 现场体验</div>
+        <p>在北涧桥对岸亲水溪滩部署全景相机，做低延迟视频采集。游客戴 VR 眼镜可沉浸式看桥。另有触摸屏可看廊桥三维建造过程。</p>
+        <div class="link">线下体验 · 廊氡度假区</div>
+      </div>
+      <div class="card">
+        <h4>文化遗产（廊桥）监管保护应用</h4>
+        <div class="meta">县政府 · 获浙江省文旅数字化改革最佳应用</div>
+        <p>打通文旅、消防、水利、气象、资规、执法六个部门的数据。功能含桥身体征画像、1 公里集雨区气象预报、温度与烟雾告警、险情一键处置。</p>
+        <div class="link">政务内部系统</div>
+      </div>
+      <div class="card">
+        <h4>中国木拱桥传统营造技艺馆</h4>
+        <div class="meta">宁德市非遗云小镇 · 2022 上线</div>
+        <p>3D 建模 + 实景浏览的线上展馆。讲木拱桥由来、编梁技术、传承谱系。属福建侧，但技艺同源，是目前做得最完整的「廊桥线上展馆」。</p>
+        <div class="link"><a href="https://www.fjdaily.com/app/content/2022-07/07/content_1511842.html" target="_blank" rel="noopener">上线报道</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">C · 视觉设计</span><span class="cnt">4 条</span></div>
+    <div class="cards">
+      <div class="card k-visual">
+        <h4>泰顺城市形象标识系统</h4>
+        <div class="meta">浙江省文化产业创新发展研究院 / 浙工商高颖团队 · 2023.11 启用</div>
+        <p>把「泰」字拆成三块：上半是廊桥飞檐，下半是碇步桥，中间一笔记水系。五色分别取自永庆桥、氡泉、畲族、三杯香、北涧桥。获浙江美术奖优秀奖。这是目前水准最高的一件泰顺廊桥视觉作品。</p>
+        <div class="link"><a href="https://www.ts.gov.cn/art/2025/6/26/art_1229882573_59142632.html" target="_blank" rel="noopener">官方发布页</a></div>
+      </div>
+      <div class="card k-visual">
+        <h4>泰顺县旅游品牌标识设计</h4>
+        <div class="meta">不老小镇设计工作室 · 站酷参赛作品</div>
+        <p>同样走「廊桥 + 泰字」的路子，字形取粗、稳。颜色提取自北涧桥经年沉淀的木色。辅助纹样几何化了畲族纹样、土楼、药发木偶、百家宴、碇步、廊桥结构。站酷上唯一一件明确的泰顺主题品牌作品。</p>
+        <div class="link"><a href="https://www.zcool.com.cn/work/ZNjI2Mjc0MDA=.html" target="_blank" rel="noopener">zcool.com.cn 作品页</a></div>
+      </div>
+      <div class="card k-visual">
+        <h4>「文物会说话」有声海报 · 北涧桥</h4>
+        <div class="meta">光明网 · 2026.05 · 策划李政葳 / 设计刘吉东等</div>
+        <p>以第一人称写北涧桥自述，配 AI 配音。点海报即听。同系列还有五星桥等多座廊桥。是「文物拟人化 + 音频」的成熟范式，值得借鉴文案结构。</p>
+        <div class="link"><a href="https://culture.gmw.cn/2026-05/27/content_38793863.htm" target="_blank" rel="noopener">光明网专题</a></div>
+      </div>
+      <div class="card k-visual">
+        <h4>廊桥出海 AI 视频创作大赛</h4>
+        <div class="meta">温州市社科联 + 泰顺县政府 + 温州肯恩大学</div>
+        <p>收到有效投稿 130 余件。金奖《廊桥未央》。银奖含《龙之脊》《廊桥老人周万巩的故事》《米勒的廊桥》。这是目前规模最大的一次泰顺廊桥设计征集，作品可作视觉参考库。</p>
+        <div class="link">名单见「温州社科」公众号</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">D · 产品文创</span><span class="cnt">3 条</span></div>
+    <div class="cards">
+      <div class="card k-product">
+        <h4>「廊氡有礼」文创系列</h4>
+        <div class="meta">廊氡度假区 · 在售</div>
+        <p>核心爆款是「廊桥瑞雪」冰箱贴：用流沙工艺还原北涧桥飞檐积雪。上架三个月销量破 2000 件。另有暖壶茶具、红包香片、拼图、笔记本。</p>
+        <div class="link">廊桥文化园景区入口商店</div>
+      </div>
+      <div class="card k-product">
+        <h4>文房泰顺</h4>
+        <div class="meta">浙工商艺术设计学院 2023 届毕设 · 李晓丽 / 李卓莹 · 指导陈昊</div>
+        <p>以泰顺石为材料做文房用具。把廊桥形态提取成笔架、镇纸、砚台的结构。是「石材 + 桥形」结合的完整产品系列。</p>
+        <div class="link"><a href="https://adc1994.zjgsu.edu.cn/?news/1502.html" target="_blank" rel="noopener">毕设展页面</a></div>
+      </div>
+      <div class="card k-product">
+        <h4>Duang Duang 桥</h4>
+        <div class="meta">同上 · 潘栩熠 / 韩佳懿</div>
+        <p>儿童玩具。用拼接、抽拉、倒塌三种动作，对应廊桥的搭建与文兴桥倒塌事件。把「破坏行为」变成亲子教育入口。概念完成度高于工艺。</p>
+        <div class="link"><a href="https://adc1994.zjgsu.edu.cn/?news/1502.html" target="_blank" rel="noopener">毕设展页面</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">E · 建筑空间</span><span class="cnt">1 条</span></div>
+    <div class="cards">
+      <div class="card k-arch">
+        <h4>肯恩双子桥（温肯泰顺廊桥）</h4>
+        <div class="meta">温州肯恩大学 · 2021 设计大赛冠军 · 赵汝珍团队 / Linnea Moore 指导</div>
+        <p>用编木拱梁结构在校园里真建一座泰顺廊桥，与美国肯恩校园的桥呼应成「双子桥」。设计把牌匾、木偶戏、山水做「框与画」的文化转印。这是唯一一件从图纸走到实体的设计作品。</p>
+        <div class="link"><a href="https://www.wku.edu.cn/2021/11/22/62328" target="_blank" rel="noopener">温肯官网</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="grp-head"><span class="tag">F · 影像与衍生</span><span class="cnt">3 条</span></div>
+    <div class="cards">
+      <div class="card k-media">
+        <h4>《廊桥遗梦》VR 项目</h4>
+        <div class="meta">宁波财经学院 2022 届数字媒体艺术毕设</div>
+        <p>三维建模 + VR，把泰顺廊桥立体化。场景里嵌了交互小游戏和特色文化表演。是学生作品里技术栈最完整的一件。</p>
+        <div class="link"><a href="https://www.nbufe.edu.cn/szys/show.html?typeid=1178&typeid2=1178&id=24343" target="_blank" rel="noopener">毕业展回顾</a></div>
+      </div>
+      <div class="card k-media">
+        <h4>《虹桥寻梦——木拱廊桥的千年传承》</h4>
+        <div class="meta">运城学院 · 2026 第 19 届中国大学生计算机设计大赛 国赛一等奖</div>
+        <p>团队在泰顺、庆元深山采风数十天，积累 10T 素材。4K 纪实 + 三维动画拆解编梁力学 + AI 补齐灾后历史影像。明确提出「AI 赋能不替代真实纪实」。</p>
+        <div class="link"><a href="https://www.ycu.edu.cn/msygysjx/A2026081019042928.html" target="_blank" rel="noopener">学院报道</a></div>
+      </div>
+      <div class="card k-media">
+        <h4>《流水辞》中英文版 + 《廊桥三问》</h4>
+        <div class="meta">周华诚 著 · 温肯团队译 · 双语短片</div>
+        <p>中文版源于两年田野调查。英译本《Song of the River》填补了泰顺廊桥系统性英文著作的空白。配套短片由温肯视觉传达外教 Matthew Wood 全英文主讲。</p>
+        <div class="link">「廊桥出海」项目成果</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="sec" id="model">
+  <div class="sec-head"><span class="sec-num">05</span><h2>作品价值模型</h2><span class="sec-sub">两个参数 · 排名实时变化</span></div>
+  <div class="model">
+    <div class="ctrls">
+      <div class="ctrl">
+        <label>参数 A · 技术实现权重 <b id="vT">50</b></label>
+        <input type="range" id="sT" min="0" max="100" value="50" step="1">
+      </div>
+      <div class="ctrl">
+        <label>参数 B · 文化考据权重 <b id="vC">50</b></label>
+        <input type="range" id="sC" min="0" max="100" value="50" step="1">
+      </div>
+      <div><button id="reset">重置</button></div>
+    </div>
+    <div class="weights" id="wline"></div>
+    <div id="ranks"></div>
+    <div class="barlegend">
+      <span><i style="background:#3E5C58"></i>技术贡献</span>
+      <span><i style="background:#A63A2E"></i>文化贡献</span>
+      <span><i style="background:#C9762F"></i>设计贡献</span>
+      <span style="color:#8C7F70">设计权重固定为 30</span>
+    </div>
+    <div class="cap" style="margin:6px 0 0">条长 = 加权贡献，不是原始分。所以一条"技术强、文化弱"的作品会出现长青段 + 短红段，总分却不一定高。</div>
+    <div id="why"></div>
+    <div class="assume">
+      <b>模型假设（必须知道）：</b><br>
+      ① 三个维度的分数是编辑主观打分（0–100），不是测量值。打分依据是公开信息里能看到的完成度。<br>
+      ② 总分 =（wT × 技术 + wC × 文化 + 30 × 设计）÷（wT + wC + 30）。权重按比例归一化，所以拖动滑块改变的是「相对重视程度」，不是绝对分数。<br>
+      ③ 三个维度不独立。技术强的项目往往文化分也高，因为做深需要考据。本模型没有处理这种相关性。<br>
+      ④ 未纳入「传播效果」和「商业价值」。这两项缺公开数据。<br>
+      ⑤ 分数会随新作品出现而过时。本表截至 2026 年 10 月。
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="sec" id="gap">
+  <div class="sec-head"><span class="sec-num">06</span><h2>空白与陷阱</h2><span class="sec-sub">比清单更重要</span></div>
+  <div class="gapbox">
+    <h3>四个空白</h3>
+    <ul>
+      <li><b>没有完整网站设计作品。</b>找不到一件「泰顺廊桥主题网站」的 UI/UX 作品集。官方站是外包建站，学生作品是 VR/视频，两者之间断档。</li>
+      <li><b>Behance / Dribbble 基本为零。</b>用中英文多组关键词检索，没有找到系统的泰顺廊桥视觉项目。国际设计平台上这块是空的。</li>
+      <li><b>站酷只有零星一件。</b>除「不老小镇」的旅游品牌标识，其余都是素材、摄影或同名作品。</li>
+      <li><b>没有信息设计作品。</b>没有找到廊桥类型谱系、营造工序、闽浙分布的可视化图表作品。这是最容易做、又最缺的一类。</li>
+    </ul>
+  </div>
+  <div class="gapbox warn">
+    <h3>两个陷阱（容易踩）</h3>
+    <ul>
+      <li><b>「廊桥 THE BRIDGE」不是泰顺。</b>站酷上那件完成度很高的廊桥品牌全案（共通概念 / 如恩工作室），做的是成都安顺廊桥的餐厅。别当参考错对象。</li>
+      <li><b>「廊桥」在工业与民航语境里指登机桥。</b>检索时会大量混入机场廊桥监测系统、商业综合体廊桥数字孪生。这些与泰顺无关，需按「木拱 / 编梁 / 泰顺 / 北涧桥」等词二次过滤。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="sec" id="method">
+  <div class="sec-head"><span class="sec-num">07</span><h2>方法与来源</h2><span class="sec-sub">可复核</span></div>
+  <div class="method">
+    <p><b>检索方式：</b>公开网络检索，共 11 组中文关键词 + 1 组英文关键词。关键词覆盖「泰顺廊桥 / 北涧桥 / 木拱廊桥 / 营造技艺 / 文创 / 视觉标识 / 数字孪生 / VR / 小程序 / 毕设 / 大赛」。未使用任何付费数据库。</p>
+    <p><b>收录标准：</b>只收能在公开网页上核到出处、且明确指向泰顺（或同源木拱廊桥技艺）的条目。纯新闻资讯不收，除非本身即作品发布页。</p>
+    <p><b>主要来源：</b>泰顺县人民政府网（ts.gov.cn）、中国非物质文化遗产网（ihchina.cn）、浙江日报 / 潮新闻、光明网、温州肯恩大学官网、站酷、浙江工商大学艺术设计学院、宁波财经学院、运城学院、mooool 设计网。</p>
+    <p><b>未能验证：</b>「廊桥拆解与组装交互程序」的公开入口。「好玩泰顺」小程序当前是否仍在运营。泰顺文化中心内「廊桥古建民俗展示馆」是否有线上版本。这三项需实地或登录后确认。</p>
+    <p style="margin-top:18px;color:#8C7F70">整理：Morty · 2026-10-21 · 为 rick 的泰顺廊桥项目准备</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  /* ---------- timeline ---------- */
+  var tl = [
+    {y:2000,x:2,c:'#3E5C58',n:'中国廊桥网'},
+    {y:2014,x:42,c:'#3E5C58',n:'廊桥文化园开园'},
+    {y:2021,x:70,c:'#3E5C58',n:'5G VR 智慧旅游'},
+    {y:2021,x:72,c:'#B08A3E',n:'肯恩双子桥设计'},
+    {y:2022,x:76,c:'#6E7F8C',n:'廊桥遗梦 VR'},
+    {y:2022,x:77,c:'#3E5C58',n:'全域全景系统'},
+    {y:2023,x:82,c:'#A63A2E',n:'城市标识系统'},
+    {y:2023,x:83,c:'#A63A2E',n:'文房泰顺 / Duang Duang 桥'},
+    {y:2025,x:90,c:'#A63A2E',n:'廊氡有礼'},
+    {y:2026,x:95,c:'#3E5C58',n:'数字孪生公开'},
+    {y:2026,x:96,c:'#6E7F8C',n:'虹桥寻梦'},
+    {y:2026,x:97,c:'#A63A2E',n:' AI 视频大赛'}
+  ];
+  var lane = document.getElementById('lane');
+  var rows = [18,42,66,90,114,138];
+  tl.forEach(function(d,i){
+    var el = document.createElement('div');
+    el.className = 'dot';
+    el.style.left = d.x + '%';
+    el.style.top = rows[i % rows.length] + 'px';
+    el.style.background = d.c;
+    el.title = d.y + ' · ' + d.n;
+    lane.appendChild(el);
+  });
+
+  /* ---------- works ---------- */
+  var works = [
+    {n:'数字孪生模型',        s:'泰顺文博馆',   t:95,c:85,d:60, k:'数字'},
+    {n:'廊桥监管保护应用',    s:'县政府',       t:96,c:60,d:58, k:'数字'},
+    {n:'廊桥拆解交互程序',    s:'泰顺文博馆',   t:92,c:80,d:62, k:'数字'},
+    {n:'木拱桥技艺馆 3D',     s:'宁德云小镇',   t:80,c:75,d:70, k:'数字'},
+    {n:'全域全景系统',        s:'县文旅体局',   t:82,c:55,d:55, k:'数字'},
+    {n:'5G VR 智慧旅游',      s:'小松坡中心',   t:84,c:58,d:56, k:'数字'},
+    {n:'城市形象标识系统',    s:'浙工商高颖团队',t:20,c:85,d:95, k:'视觉'},
+    {n:'旅游品牌标识',        s:'不老小镇工作室',t:15,c:70,d:82, k:'视觉'},
+    {n:'北涧桥有声海报',      s:'光明网',       t:60,c:90,d:85, k:'视觉'},
+    {n:'廊桥出海 AI 大赛',    s:'温州社科联',   t:88,c:70,d:75, k:'影像'},
+    {n:'虹桥寻梦',            s:'运城学院',     t:90,c:85,d:88, k:'影像'},
+    {n:'廊桥遗梦 VR',         s:'宁波财经学院', t:85,c:75,d:72, k:'影像'},
+    {n:'肯恩双子桥',          s:'温州肯恩大学', t:70,c:88,d:90, k:'建筑'},
+    {n:'文房泰顺',            s:'浙工商毕设',   t:25,c:80,d:78, k:'产品'},
+    {n:'Duang Duang 桥',      s:'浙工商毕设',   t:30,c:72,d:80, k:'产品'},
+    {n:'廊氡有礼',            s:'廊氡度假区',   t:30,c:65,d:75, k:'产品'},
+    {n:'廊桥积木',            s:'泰顺文旅',     t:45,c:60,d:70, k:'产品'},
+    {n:'中国廊桥网',          s:'langqiao.net', t:35,c:88,d:40, k:'站点'}
+  ];
+
+  var sT = document.getElementById('sT');
+  var sC = document.getElementById('sC');
+  var vT = document.getElementById('vT');
+  var vC = document.getElementById('vC');
+  var ranks = document.getElementById('ranks');
+  var why = document.getElementById('why');
+  var wline = document.getElementById('wline');
+
+  function calc(wT,wC,wD){
+    var sum = wT + wC + wD;
+    return works.map(function(w){
+      var a = wT * w.t, b = wC * w.c, e = wD * w.d;
+      return {w:w, t:a/sum, c:b/sum, d:e/sum, score:(a+b+e)/sum};
+    }).sort(function(x,y){return y.score - x.score;});
+  }
+
+  function render(){
+    var wT = +sT.value, wC = +sC.value, wD = 30;
+    vT.textContent = wT; vC.textContent = wC;
+    wline.textContent = '当前比例：技术 ' + wT + ' ∶ 文化 ' + wC + ' ∶ 设计 ' + wD + '（归一化后计算）';
+
+    var ranked = calc(wT,wC,wD);
+    var top = ranked.slice(0,10);
+    ranks.innerHTML = top.map(function(r,i){
+      var bar = '<span class="s-t" style="flex-grow:' + r.t.toFixed(2) + '"></span>' +
+                '<span class="s-c" style="flex-grow:' + r.c.toFixed(2) + '"></span>' +
+                '<span class="s-d" style="flex-grow:' + r.d.toFixed(2) + '"></span>';
+      return '<div class="rank-row"><span class="idx">' + (i+1) + '</span>' +
+             '<span class="nm" title="' + r.w.n + '">' + r.w.n + '<em>' + r.w.s + '</em></span>' +
+             '<span class="bar">' + bar + '</span>' +
+             '<span class="sc">' + r.score.toFixed(0) + '</span></div>';
+    }).join('');
+
+    // explanation
+    var a = ranked[0], b = ranked[1];
+    var dT = a.w.t - b.w.t, dC = a.w.c - b.w.c, dD = a.w.d - b.w.d;
+    var maxd = Math.max(Math.abs(dT), Math.abs(dC), Math.abs(dD));
+    var reason, label;
+    if (maxd === Math.abs(dT)) { label = '技术实现'; }
+    else if (maxd === Math.abs(dC)) { label = '文化考据'; }
+    else { label = '设计完成度'; }
+
+    var trend;
+    if (wT - wC > 25) {
+      trend = '你把技术权重压过文化 ' + (wT-wC) + ' 点。<b>结果向「数字类」作品倾斜</b>：数字孪生、监管平台、拆解程序这类有真实三维或系统能力的条目排到前面。原因很直接——它们的技分在 80 以上，而文化类作品的技术分普遍低于 35，权重放大后差距被拉开。';
+    } else if (wC - wT > 25) {
+      trend = '你把文化权重压过技术 ' + (wC-wT) + ' 点。<b>结果向「文化类」作品倾斜</b>：城市标识、有声海报、肯恩双子桥、中国廊桥网排到前面。原因是这些作品的文化分在 85 上下，而纯数字系统的文化分只有 55–60。';
+    } else {
+      trend = '技术权重与文化权重接近（差 ' + Math.abs(wT-wC) + ' 点）。<b>结果由「双高」作品领先</b>：既做过考据、又把技术做实的条目占优。单科突出的作品被压下去。';
+    }
+
+    why.innerHTML =
+      '<b>为什么是这个排名：</b>' + trend + '<br><br>' +
+      '第一名是《' + a.w.n + '》（' + a.score.toFixed(0) + ' 分），第二名《' + b.w.n + '》（' + b.score.toFixed(0) + ' 分）。' +
+      '两者差 ' + (a.score-b.score).toFixed(1) + ' 分，主要差在<b>' + label + '</b>：' +
+      a.w.t + '/' + a.w.c + '/' + a.w.d + ' 对 ' + b.w.t + '/' + b.w.c + '/' + b.w.d + '（技术/文化/设计）。' +
+      '当前权重下，' + label + '这一项的差距被乘以 ' + (label==='技术实现'?wT:(label==='文化考据'?wC:wD)) + '，成为分差的主因。<br><br>' +
+      '<b>换个参数会怎样：</b>把「文化」拉到 90、「技术」压到 10，前三名会换成城市形象标识、有声海报、肯恩双子桥——因为它们的文化分高且设计分也高。' +
+      '这说明一件事：<b>没有绝对最好的作品，只有和你目标最匹配的作品。</b>你要做网站，看设计分；你要做数字展馆，看技术分。';
+
+    document.querySelectorAll('.rank-row').forEach(function(row,i){
+      row.style.opacity = 1;
+    });
+  }
+
+  sT.addEventListener('input', render);
+  sC.addEventListener('input', render);
+  document.getElementById('reset').addEventListener('click', function(){
+    sT.value = 50; sC.value = 50; render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

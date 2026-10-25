@@ -1,0 +1,7 @@
+# 本地运行产物
+serve.log
+serve-stdout.log
+
+# 本地工具目录
+.openchamber/
+.workbuddy/

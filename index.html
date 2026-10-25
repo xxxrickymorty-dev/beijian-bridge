@@ -1,0 +1,419 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>编梁 · 北涧桥 — 交互案例</title>
+<meta name="description" content="用短木头亲手编出一座 29 米的编木拱廊桥。北涧桥 · 泰顺泗溪 · Three.js 交互案例。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='8' y='8' width='84' height='84' rx='6' fill='%23a63a2e'/%3E%3Ctext x='50' y='70' font-size='54' text-anchor='middle' fill='%23f3eee3' font-family='serif'%3E编%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#f3eee3;
+    --paper-2:#faf7f0;
+    --ink:#211a14;
+    --ink-2:#5c5044;
+    --muted:#8a7c6c;
+    --line:#d8cdb9;
+    --accent:#a63a2e;
+    --wood:#b08a5e;
+    --teal:#3e5c58;
+    --dark:#17130f;
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{display:block;max-width:100%;}
+  .wrap{width:min(1180px, calc(100% - 56px));margin:0 auto;}
+  .mono{font-family:var(--sans);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;}
+
+  /* ---------- header ---------- */
+  header.top{
+    position:sticky;top:0;z-index:30;
+    background:rgba(243,238,227,.9);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topin{
+    width:min(1180px, calc(100% - 56px));margin:0 auto;
+    height:66px;display:flex;align-items:center;gap:28px;
+  }
+  .brand{display:flex;align-items:center;gap:11px;flex:none;}
+  .seal{
+    width:30px;height:30px;background:var(--accent);color:var(--paper);
+    font-family:var(--serif);font-size:18px;line-height:30px;text-align:center;
+    border-radius:2px;
+  }
+  .brandtxt{font-family:var(--serif);font-size:16px;letter-spacing:.08em;}
+  .brandtxt em{font-style:normal;color:var(--accent);}
+  nav{display:flex;gap:22px;margin-left:auto;}
+  nav a{font-size:12px;letter-spacing:.08em;color:var(--ink-2);position:relative;}
+  nav a::after{content:"";position:absolute;left:0;right:100%;bottom:-5px;height:1px;background:var(--accent);transition:right .25s;}
+  nav a:hover::after{right:0;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;letter-spacing:.08em;
+    background:var(--ink);color:var(--paper);
+    padding:10px 16px;border:1px solid var(--ink);border-radius:2px;
+    transition:.2s;
+  }
+  .btn:hover{background:var(--accent);border-color:var(--accent);}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+  .btn.ghost:hover{border-color:var(--ink);background:transparent;color:var(--ink);}
+  .topbtn{flex:none;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative;overflow:hidden;
+    background-image:
+      linear-gradient(rgba(33,26,20,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(33,26,20,.045) 1px, transparent 1px);
+    background-size:52px 52px;
+    border-bottom:1px solid var(--line);
+    padding:calc(28px + 1.5vw) 0 62px;
+  }
+  .hero::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:220px;pointer-events:none;
+    background:linear-gradient(to bottom, rgba(243,238,227,0), var(--paper));
+  }
+  .hero .wrap{position:relative;z-index:1;}
+  .kicker{display:flex;align-items:center;gap:14px;color:var(--accent);font-size:11px;letter-spacing:.24em;margin-bottom:18px;}
+  .kicker::before{content:"";width:34px;height:1px;background:var(--accent);}
+  .kicker span{color:var(--muted);letter-spacing:.16em;}
+  h1.title{
+    margin:0 0 10px;font-family:var(--serif);font-weight:600;
+    font-size:clamp(78px, 14vw, 170px);line-height:.94;letter-spacing:-.02em;
+    display:flex;align-items:flex-start;gap:22px;
+  }
+  .seal3{
+    flex:none;width:clamp(54px,6vw,74px);height:clamp(74px,8.4vw,102px);
+    margin-top:clamp(10px,2vw,26px);
+    background:var(--accent);color:var(--paper);
+    font-family:var(--serif);font-size:clamp(15px,1.7vw,21px);
+    line-height:1.25;letter-spacing:.12em;
+    writing-mode:vertical-rl;text-align:center;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:2px;transform:rotate(1.5deg);
+  }
+  .sub{
+    font-family:var(--serif);font-size:clamp(21px,2.6vw,32px);
+    color:var(--ink);margin:0 0 22px;letter-spacing:.01em;
+  }
+  .lede{max-width:590px;color:var(--ink-2);font-size:14.5px;line-height:1.9;margin:0 0 18px;}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:0 20px;border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);max-width:760px;padding:9px 0;
+    font-size:10.5px;letter-spacing:.14em;color:var(--muted);
+  }
+  .meta span{position:relative;}
+  .meta span+span::before{content:"/";margin-right:20px;color:var(--line);}
+
+  .herofig{margin:30px 0 0;position:relative;}
+  .figbar{
+    display:flex;justify-content:space-between;gap:16px;
+    font-size:10px;letter-spacing:.16em;color:var(--muted);
+    padding:0 2px 9px;
+  }
+  .shot{
+    position:relative;border:1px solid var(--line);background:var(--paper-2);
+    padding:9px;border-radius:2px;box-shadow:0 24px 60px -36px rgba(33,26,20,.55);
+  }
+  .shot img{width:100%;height:clamp(300px, 34vw, 400px);object-fit:cover;object-position:50% 44%;background:var(--dark);}
+  .shot .corner{position:absolute;width:14px;height:14px;border:1px solid var(--accent);pointer-events:none;}
+  .shot .c1{left:-1px;top:-1px;border-right:0;border-bottom:0;}
+  .shot .c2{right:-1px;bottom:-1px;border-left:0;border-top:0;}
+  .herocta{
+    position:absolute;right:26px;bottom:26px;z-index:2;
+    background:var(--paper);color:var(--ink);border:1px solid var(--ink);
+    padding:13px 20px;font-size:12px;letter-spacing:.1em;border-radius:2px;
+    display:inline-flex;align-items:center;gap:14px;transition:.2s;
+  }
+  .herocta:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .herocta span{font-size:15px;}
+  .herofoot{
+    display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    margin-top:14px;font-size:10.5px;letter-spacing:.1em;color:var(--muted);
+  }
+  .scrollhint{display:inline-flex;align-items:center;gap:10px;}
+  .scrollhint::before{content:"";width:24px;height:1px;background:var(--muted);}
+
+  /* ---------- sections ---------- */
+  .sec{padding:92px 0;border-bottom:1px solid var(--line);}
+  .sechead{display:flex;align-items:baseline;gap:18px;border-bottom:1px solid var(--ink);padding-bottom:12px;margin-bottom:38px;}
+  .sechead .num{font-family:var(--serif);font-size:12px;color:var(--accent);letter-spacing:.18em;}
+  .sechead h2{font-family:var(--serif);font-size:clamp(26px,3vw,36px);font-weight:600;margin:0;letter-spacing:.03em;}
+  .sechead .sub{margin-left:auto;font-size:11px;letter-spacing:.14em;color:var(--muted);}
+
+  .intro2{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:start;}
+  .big{
+    font-family:var(--serif);font-size:clamp(28px,3.4vw,44px);
+    line-height:1.45;margin:0;letter-spacing:.01em;
+  }
+  .big em{font-style:normal;color:var(--accent);}
+  .copy p{color:var(--ink-2);margin:0 0 16px;max-width:480px;}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:26px;}
+  .stats div{background:var(--paper-2);padding:18px 18px 15px;}
+  .stats b{display:block;font-family:var(--serif);font-size:31px;line-height:1.1;font-weight:500;letter-spacing:.02em;}
+  .stats b span{font-size:12px;font-family:var(--sans);color:var(--muted);margin-left:3px;letter-spacing:.06em;}
+  .stats small{display:block;font-size:10.5px;letter-spacing:.12em;color:var(--muted);margin-top:3px;}
+
+  /* ---------- dark structure ---------- */
+  .dark{background:var(--dark);color:#efe4d1;padding:96px 0;border-bottom:1px solid #2a231b;}
+  .dark .sechead{border-bottom-color:#4a4034;}
+  .dark .sechead h2{color:#f4e9d6;}
+  .dark .sechead .num{color:#d75b3c;}
+  .dark .sechead .sub{color:#8f8170;}
+  .structgrid{display:grid;grid-template-columns:1.18fr .82fr;gap:54px;align-items:center;}
+  .archfig{margin:0;}
+  .archfig .frame{border:1px solid #3a3128;background:#0f0c09;padding:8px;}
+  .archfig img{width:100%;background:#0e0b08;}
+  .archfig figcaption{font-size:10.5px;letter-spacing:.12em;color:#8f8170;margin-top:10px;display:flex;justify-content:space-between;gap:12px;}
+  .structcopy h3{font-family:var(--serif);font-size:clamp(24px,2.6vw,32px);font-weight:500;margin:0 0 18px;line-height:1.5;color:#f4e9d6;}
+  .structcopy p{color:#b8a892;font-size:14px;margin:0 0 14px;max-width:390px;}
+  .sys{list-style:none;padding:0;margin:24px 0 0;border-top:1px solid #3a3128;}
+  .sys li{display:flex;align-items:baseline;gap:14px;padding:10px 0;border-bottom:1px solid #2a231b;font-size:12px;color:#cbbaa2;}
+  .sys b{font-family:var(--serif);font-size:16px;font-weight:500;color:#f4e9d6;min-width:70px;}
+  .sys em{font-style:normal;color:#8f8170;font-size:10.5px;letter-spacing:.1em;margin-left:auto;}
+  .twofigs{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:44px;}
+  .twofigs figure{margin:0;border:1px solid #3a3128;background:#0f0c09;padding:7px;}
+  .twofigs img{width:100%;}
+  .twofigs figcaption{padding:9px 4px 3px;font-size:10px;letter-spacing:.12em;color:#8f8170;display:flex;justify-content:space-between;gap:10px;}
+
+  /* ---------- process ---------- */
+  .process{display:grid;grid-template-columns:.95fr 1.05fr;gap:64px;align-items:start;}
+  .buildfig{margin:0;position:sticky;top:92px;}
+  .buildfig .frame{border:1px solid var(--line);background:var(--paper-2);padding:8px;}
+  .buildfig img{width:100%;background:var(--dark);}
+  .buildfig figcaption{font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin-top:9px;}
+  .steps{list-style:none;margin:0;padding:0;counter-reset:s;}
+  .steps li{display:grid;grid-template-columns:46px 1fr;gap:18px;padding:20px 0 22px;border-top:1px solid var(--line);}
+  .steps li:first-child{border-top:0;padding-top:0;}
+  .steps .n{font-family:var(--serif);font-size:13px;color:var(--accent);letter-spacing:.1em;padding-top:3px;}
+  .steps h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 4px;letter-spacing:.02em;}
+  .steps p{margin:0;color:var(--ink-2);font-size:13.5px;max-width:460px;}
+  .note{font-size:11px;color:var(--muted);letter-spacing:.04em;margin-top:22px;border-left:2px solid var(--accent);padding-left:12px;line-height:1.9;}
+
+  /* ---------- data ---------- */
+  .datagrid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .datagrid div{background:var(--paper-2);padding:22px 18px 18px;}
+  .datagrid b{display:block;font-family:var(--serif);font-size:clamp(26px,3vw,38px);font-weight:500;line-height:1.05;}
+  .datagrid b span{font-size:12px;font-family:var(--sans);color:var(--muted);margin-left:2px;}
+  .datagrid small{display:block;font-size:10px;letter-spacing:.13em;color:var(--muted);margin-top:7px;}
+
+  /* ---------- credits ---------- */
+  .creditgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;}
+  .creditgrid h3{font-family:var(--serif);font-size:16px;margin:0 0 10px;font-weight:600;letter-spacing:.04em;}
+  .creditgrid p{margin:0 0 8px;color:var(--ink-2);font-size:13px;line-height:1.9;}
+  .endcta{display:flex;flex-wrap:wrap;gap:12px;margin-top:46px;padding-top:30px;border-top:1px solid var(--line);}
+
+  footer{padding:34px 0 46px;}
+  .footin{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap;}
+  .footin .f1{font-family:var(--serif);font-size:16px;letter-spacing:.06em;}
+  .footin .f1 em{font-style:normal;color:var(--accent);}
+  .footin .f2{font-size:10px;letter-spacing:.16em;color:var(--muted);text-align:right;line-height:2;}
+
+  @media (max-width:900px){
+    .wrap,.topin{width:calc(100% - 40px);}
+    nav{display:none;}
+    .topbtn{margin-left:auto;}
+    .intro2,.structgrid,.process{grid-template-columns:1fr;gap:34px;}
+    .buildfig{position:static;}
+    .twofigs{grid-template-columns:1fr;}
+    .datagrid{grid-template-columns:repeat(3,1fr);}
+    .creditgrid{grid-template-columns:1fr;gap:26px;}
+    .sechead .sub{display:none;}
+    .hero{padding-top:30px;}
+    .seal3{width:44px;height:64px;font-size:13px;margin-top:8px;}
+    .meta div{padding-right:14px;margin-right:14px;}
+    .herocta{right:18px;bottom:18px;padding:11px 15px;}\n    .shot img{height:280px;object-position:50% 50%;}
+    .sec{padding:64px 0;}
+    .dark{padding:64px 0;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .datagrid div{padding:16px 14px 14px;}
+  }
+  @media (max-width:520px){
+    h1.title{gap:12px;}
+    .stats{grid-template-columns:1fr 1fr;}
+    .datagrid{grid-template-columns:repeat(2,1fr);}
+    .meta{max-width:none;}
+    .meta div{border-right:0;padding-right:0;margin-right:18px;}
+    .footin .f2{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topin">
+    <a class="brand" href="#top" aria-label="回到顶部">
+      <span class="seal">编</span>
+      <span class="brandtxt">编梁 <em>·</em> 北涧桥</span>
+    </a>
+    <nav>
+      <a href="#case">案例</a>
+      <a href="#structure">结构</a>
+      <a href="#process">做法</a>
+      <a href="#data">数据</a>
+      <a href="#credits">制作</a>
+    </nav>
+    <a class="btn topbtn" href="prototype/index.html?auto=1" target="_blank" rel="noopener">进入造桥 ↗</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="kicker">Interactive Case <span>2026</span></div>
+      <h1 class="title">
+        <span>编梁</span>
+        <span class="seal3" aria-label="北涧桥">北涧桥</span>
+      </h1>
+      <p class="sub">把 29 米，折进一堆短木头里。</p>
+      <p class="lede">一座可以亲手编出来的编木拱廊桥。没有钉子，没有桥墩，只有 8 根苗、2 个牛头。两种玩法：速览，或匠作模式——一根一根来，看清每一个榫卯。</p>
+      <div class="meta">
+        <span>泰顺 · 泗溪</span>
+        <span>编木拱</span>
+        <span>Three.js</span>
+        <span>14 步</span>
+      </div>
+
+      <figure class="herofig">
+        <div class="figbar"><span>北涧桥 · 程序化复原</span><span>实时渲染 / 非测绘比例</span></div>
+        <div class="shot">
+          <span class="corner c1"></span><span class="corner c2"></span>
+          <img src="assets/bridge-full.png" alt="北涧桥交互复原：编木拱上架起廊屋">
+          <a class="herocta" href="prototype/index.html?auto=1" target="_blank" rel="noopener">开始造桥 <span>↗</span></a>
+        </div>
+        <figcaption class="herofoot">
+          <span>从两根牛头开始，拖到一座廊屋。</span>
+          <span class="scrollhint">向下读案例</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sec" id="case">
+    <div class="wrap">
+      <div class="sechead"><span class="num">01</span><h2>案例</h2><span class="sub">为什么是北涧桥</span></div>
+      <div class="intro2">
+        <p class="big">这不是一座桥的模型，<br>是<em>一套造桥的顺序</em>。</p>
+        <div class="copy">
+          <p>北涧桥在泰顺泗溪，始建于清康熙十三年，嘉庆八年重建。全长 51.87 米，净跨 29 米，桥屋二十间，中间起重檐楼阁。</p>
+          <p>它的秘密不是一根更大的木头，而是两套折边拱：三节苗管跨度，五节苗把它别住。短，不是限制，是方法。</p>
+          <div class="stats">
+            <div><b>51.87<span>m</span></b><small>全长</small></div>
+            <div><b>29<span>m</span></b><small>净跨</small></div>
+            <div><b>8<span>根</span></b><small>苗 / 单排</small></div>
+            <div><b>0<span>颗</span></b><small>铁钉</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dark" id="structure">
+    <div class="wrap">
+      <div class="sechead"><span class="num">02</span><h2>结构</h2><span class="sub">两套拱，互相别住</span></div>
+      <div class="structgrid">
+        <figure class="archfig">
+          <div class="frame"><img src="assets/arch.png" alt="编木拱拱架，三节苗与五节苗交错"></div>
+          <figcaption><span>拱架 / 隐藏廊屋</span><span>THREE.JS · 实时</span></figcaption>
+        </figure>
+        <div class="structcopy">
+          <h3>短木头不是缺点。<br>它是这套结构的起点。</h3>
+          <p>三节苗三根，从两岸顶到拱顶；五节苗五根，从下面穿进去。两套系统在节点上一上一下地错开，牛头横向咬住两端，剪刀苗管前后。桥面压上去，节点只会更紧。</p>
+          <ul class="sys">
+            <li><b>三节苗</b>第一系统 · 3 根<em>跨度</em></li>
+            <li><b>五节苗</b>第二系统 · 5 根<em>别压</em></li>
+            <li><b>牛头</b>横向主梁 · 2 座<em>落岸</em></li>
+            <li><b>剪刀苗</b>横向斜撑<em>抗晃</em></li>
+          </ul>
+        </div>
+      </div>
+      <div class="twofigs">
+        <figure><img src="assets/san.png" alt="只看三节苗"><figcaption><span>只看三节苗 / 三根</span><span>FIRST SYSTEM</span></figcaption></figure>
+        <figure><img src="assets/wu.png" alt="只看五节苗"><figcaption><span>只看五节苗 / 五根</span><span>SECOND SYSTEM</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="process">
+    <div class="wrap">
+      <div class="sechead"><span class="num">03</span><h2>做法</h2><span class="sub">十四步，不能跳</span></div>
+      <div class="process">
+        <figure class="buildfig">
+          <div class="frame"><img src="assets/build.png" alt="三节苗架在临时支架上，五节苗正在穿入"></div>
+          <figcaption>五节苗穿进第一系统，支架还撑着。下一步才是拆架。</figcaption>
+        </figure>
+        <ol class="steps">
+          <li><span class="n">01</span><div><h3>立牛头</h3><p>两岸的横向主梁先落位。所有苗最后都咬在它身上，桥的推力也在这里落岸。</p></div></li>
+          <li><span class="n">02</span><div><h3>编三节苗</h3><p>三根长料顶出跨度，临时支架撑着。此时它还是个机构，不能自己站住。</p></div></li>
+          <li><span class="n">03</span><div><h3>编五节苗</h3><p>五根短料穿进去。两套系统开始互相别住，机构变成结构。</p></div></li>
+          <li><span class="n">04</span><div><h3>锁拱</h3><p>剪刀苗、横串，把前后和横向锁死。桥要晃，先锁这里。</p></div></li>
+          <li><span class="n">05</span><div><h3>拆架</h3><p>撤掉支撑，桥体微沉，自己站住。这是整个体验的高潮。</p></div></li>
+          <li><span class="n">06</span><div><h3>起廊屋</h3><p>桥面、廊柱、瓦顶压上去。自重让节点更紧，廊桥才成为廊桥。</p></div></li>
+        </ol>
+      </div>
+      <p class="note">每一步都要自己拖，放错会弹回；按回车或用「自动入卯」可以放进去。速览 14 步；匠作模式 23 步，会带你走一遍榫卯节点、将军柱和一根一根立起来的廊屋，最后从两岸的石阶走上桥。合龙后可以只看三节苗、只看五节苗，或抽掉一根五节苗看它变成机构；还有小测验，语音和音乐可以一键关。</p>
+    </div>
+  </section>
+
+  <section class="sec" id="data">
+    <div class="wrap">
+      <div class="sechead"><span class="num">04</span><h2>数据</h2><span class="sub">一座桥的尺度</span></div>
+      <div class="datagrid">
+        <div><b>51.87<span>m</span></b><small>全长</small></div>
+        <div><b>29<span>m</span></b><small>净跨</small></div>
+        <div><b>20<span>间</span></b><small>廊屋</small></div>
+        <div><b>84<span>根</span></b><small>桥柱</small></div>
+        <div><b>0<span>颗</span></b><small>铁钉</small></div>
+        <div><b>16/26<span>级</span></b><small>东西石阶</small></div>
+      </div>
+      <p class="note">数据参考北涧桥公开资料与泰顺县文博馆的讲解。几何、力流与节点均为示意，不是测绘模型，也不作为修缮依据。</p>
+    </div>
+  </section>
+
+  <section class="sec" id="credits">
+    <div class="wrap">
+      <div class="sechead"><span class="num">05</span><h2>制作</h2><span class="sub">工具、来源与边界</span></div>
+      <div class="creditgrid">
+        <div>
+          <h3>工具</h3>
+          <p>Three.js r128 · 原生 JavaScript</p>
+          <p>程序化几何 / 环境 / 榫卯节点 / 石阶 / WebAudio / 语音合成</p>
+          <p>单文件，无构建，本地可开</p>
+        </div>
+        <div>
+          <h3>参考</h3>
+          <p>北涧桥 · 泰顺县文博馆陈松年讲解</p>
+          <p>刘妍《编木拱桥：技术与社会史》</p>
+          <p>刘杰《中国木拱廊桥建筑艺术》</p>
+        </div>
+        <div>
+          <h3>边界</h3>
+          <p>非商业交互原型。桥体为风格化复原，不是测绘模型。</p>
+          <p>力流用简化三铰拱轴力模型，标为「示意」，不是有限元。</p>
+        </div>
+      </div>
+      <div class="endcta">
+        <a class="btn" href="prototype/index.html?auto=1" target="_blank" rel="noopener">进入造桥 ↗</a>
+        <a class="btn ghost" href="prototype/index.html?built=1" target="_blank" rel="noopener">直接看结构 ↗</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footin">
+    <div class="f1">编梁 <em>·</em> 北涧桥</div>
+    <div class="f2">2026 · 泰顺泗溪<br>DESIGNED &amp; BUILT IN CODE</div>
+  </div>
+</footer>
+
+</body>
+</html>

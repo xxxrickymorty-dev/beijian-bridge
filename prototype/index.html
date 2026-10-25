@@ -1,0 +1,2538 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>编梁 · 北涧桥 — 交互原型</title>
+<style>
+  :root{
+    --bg:#14110f;
+    --ink:#e9dfcd;
+    --ink-2:#b3a48d;
+    --ink-3:#7c7061;
+    --line:rgba(233,223,205,.16);
+    --accent:#d75b3c;
+    --wood:#c9b28e;
+    --wood-2:#a9704f;
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{position:fixed;inset:0;}
+  #vig{position:fixed;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 42%, rgba(0,0,0,0) 55%, rgba(10,7,5,.22) 100%);}
+  canvas{display:block;}
+
+  header{
+    position:fixed;top:0;left:0;right:0;padding:22px 30px 0;
+    display:flex;align-items:flex-start;gap:16px;pointer-events:none;z-index:5;
+    background:linear-gradient(to bottom, rgba(10,14,14,.55), rgba(10,14,14,0));
+  }
+  .brand{font-family:var(--serif);font-size:18px;letter-spacing:.14em;}
+  .brand em{font-style:normal;color:var(--accent);}
+  .sub{font-size:10.5px;letter-spacing:.18em;color:var(--ink-3);margin-top:5px;}
+  .spacer{flex:1;}
+  .tool{
+    pointer-events:auto;font-family:var(--sans);font-size:11px;letter-spacing:.08em;
+    color:var(--ink-2);background:transparent;border:1px solid var(--line);
+    border-radius:2px;padding:7px 12px;cursor:pointer;transition:.18s;
+  }
+  .tool:hover{color:var(--ink);border-color:rgba(233,223,205,.4);}
+
+  #hud{
+    position:fixed;left:30px;bottom:30px;z-index:5;width:340px;max-width:calc(100vw - 60px);
+    pointer-events:none;
+    background:rgba(12,16,15,.55);padding:14px 16px 15px;border-radius:3px;
+  }
+  #hud,#legend{transition:opacity .6s;}
+  body:not(.playing) #hud, body:not(.playing) #legend{opacity:0;pointer-events:none;}
+  .ticks{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:16px;}
+  .ticks i{display:block;flex:none;width:10px;height:2px;background:rgba(233,223,205,.18);transition:.4s;}
+  .ticks i.done{background:var(--accent);}
+  .ticks i.now{background:var(--ink);}
+  .stepnum{font-size:10px;letter-spacing:.22em;color:var(--accent);margin-bottom:7px;}
+  .stepname{font-family:var(--serif);font-size:23px;line-height:1.3;margin-bottom:7px;}
+  .hint{font-size:13px;line-height:1.8;color:#c4b6a0;max-width:330px;}
+
+  .know{
+    display:none;font-size:11.5px;line-height:1.7;color:#a89a86;
+    max-width:330px;margin-top:8px;padding-left:9px;border-left:1px solid var(--accent);
+  }
+  .know.show{display:block;}
+
+  #tip{
+    position:fixed;left:0;top:0;z-index:4;transform:translate(-50%,-115%);will-change:transform;
+    font-size:10.5px;letter-spacing:.12em;color:#f0e6d4;
+    background:rgba(20,17,15,.82);border:1px solid rgba(215,91,60,.55);
+    padding:5px 10px;border-radius:2px;pointer-events:none;white-space:nowrap;
+    opacity:0;transition:opacity .18s;
+  }
+  #tip.show{opacity:1;}
+  #autoBtn{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;display:none;}
+  #autoBtn.show{display:block;}
+
+  #legend{
+    position:fixed;right:30px;top:78px;bottom:auto;z-index:5;font-size:11px;
+    color:var(--ink-3);line-height:2;text-align:right;pointer-events:none;
+    background:rgba(20,17,15,.55);padding:10px 12px;border-radius:2px;
+
+  }
+  #legend b{display:inline-block;width:9px;height:9px;border-radius:1px;margin-right:7px;vertical-align:0;}
+  #legend .note{display:block;margin-top:10px;font-size:9.5px;letter-spacing:.08em;color:#5e554a;}
+
+  #views{
+    position:fixed;right:30px;bottom:30px;z-index:6;
+    display:none;align-items:center;gap:4px;flex-wrap:wrap;
+    background:rgba(20,17,15,.72);border:1px solid var(--line);
+    padding:8px 10px;border-radius:2px;
+  }
+  #views.show{display:flex;}
+  #views .vlabel{font-size:9px;letter-spacing:.16em;color:var(--ink-3);margin-right:5px;}
+  #views button{
+    font-family:var(--sans);font-size:10.5px;letter-spacing:.06em;
+    color:var(--ink-3);background:transparent;border:1px solid transparent;
+    padding:5px 8px;border-radius:1px;cursor:pointer;transition:.15s;
+  }
+  #views button:hover{color:var(--ink);}
+  #views button.on{color:var(--ink);border-color:rgba(215,91,60,.65);}
+  #views .vsep{width:1px;height:14px;background:var(--line);margin:0 3px;}
+
+  #toast{
+    position:fixed;left:50%;bottom:92px;z-index:9;
+    transform:translateX(-50%) translateY(8px);
+    background:rgba(20,17,15,.92);border:1px solid rgba(215,91,60,.5);
+    color:var(--ink);font-size:12px;letter-spacing:.04em;line-height:1.6;
+    padding:9px 15px;border-radius:2px;max-width:78vw;text-align:center;
+    opacity:0;pointer-events:none;transition:.3s;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  #cta{
+    position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;
+    opacity:0;pointer-events:none;transition:.3s;
+  }
+  #cta.show{opacity:1;pointer-events:auto;}
+  #cta button{
+    font-family:var(--sans);font-size:13px;letter-spacing:.1em;color:var(--ink);
+    background:rgba(20,17,15,.7);border:1px solid rgba(233,223,205,.45);
+    padding:13px 26px;border-radius:2px;cursor:pointer;backdrop-filter:blur(6px);
+    transition:.18s;
+  }
+  #cta button:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+  .veil{
+    position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:flex-start;
+    background:rgba(12,10,8,.52);backdrop-filter:blur(4px);
+    transition:opacity .6s ease;padding:30px 30px 30px 8vw;
+  }
+  .veil.hide{opacity:0;pointer-events:none;}
+  #end{background:rgba(12,10,8,.42);}
+  .card{max-width:470px;width:100%;position:relative;isolation:isolate;}
+  .card::before{content:'';position:absolute;inset:-52px -90px -52px -74px;z-index:-1;background:radial-gradient(ellipse at 45% 44%, rgba(8,7,5,.78) 0%, rgba(8,7,5,.5) 52%, rgba(8,7,5,0) 78%);filter:blur(7px);}
+  .kicker{font-size:10px;letter-spacing:.26em;color:var(--accent);margin-bottom:20px;}
+  .card h1{font-family:var(--serif);font-size:42px;line-height:1.15;font-weight:600;margin:0 0 18px;letter-spacing:.02em;}
+  .card h1 small{display:block;font-size:15px;color:var(--ink-2);letter-spacing:.08em;margin-top:12px;font-weight:400;}
+  .card p{font-size:13px;line-height:1.9;color:var(--ink-2);margin:0 0 12px;}
+  .card .rule{height:1px;background:var(--line);margin:24px 0;}
+  .card button{
+    font-family:var(--sans);font-size:13px;letter-spacing:.12em;color:var(--bg);
+    background:var(--ink);border:1px solid var(--ink);border-radius:2px;
+    padding:14px 28px;cursor:pointer;margin-top:10px;transition:.18s;
+  }
+  .card button:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .card button.ghost{background:transparent;color:var(--ink-2);border-color:var(--line);margin-left:10px;}
+  .card button.ghost:hover{background:transparent;color:var(--ink);border-color:rgba(233,223,205,.5);}
+
+  #quizQ{font-family:var(--serif);font-size:23px;line-height:1.5;font-weight:600;margin:0 0 18px;}
+  #quizOpts button{
+    display:block;width:100%;text-align:left;margin:7px 0;padding:12px 14px;
+    font-family:var(--sans);font-size:13px;line-height:1.6;color:var(--ink);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:2px;
+    cursor:pointer;transition:.15s;
+  }
+  #quizOpts button:hover{border-color:var(--ink);}
+  #quizOpts button.ok{border-color:#3e7f5a;color:#a8d8b8;}
+  #quizOpts button.no{border-color:var(--accent);color:#e59a86;}
+  #quizFb{min-height:22px;font-size:12.5px;color:var(--ink-2);line-height:1.8;margin:10px 0 4px;}
+  .quizcard .kicker{margin-bottom:14px;}
+  .meta{display:flex;gap:30px;margin:6px 0 3px;}
+  .meta div{font-size:10.5px;letter-spacing:.1em;color:var(--ink-3);}
+  .meta b{display:block;font-family:var(--serif);font-size:29px;color:var(--ink);font-weight:500;letter-spacing:.02em;margin-bottom:3px;}
+  .meta b span{font-size:12px;color:var(--ink-2);font-family:var(--sans);margin-left:2px;}
+
+  #err{
+    position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+    background:var(--bg);color:var(--ink-2);font-size:13px;text-align:center;line-height:1.8;
+  }
+
+  @media (max-width:760px){
+    header{padding:16px 18px 0;}
+    .brand{font-size:15px;}
+    #hud{left:18px;bottom:20px;width:calc(100vw - 36px);}
+    .stepname{font-size:19px;}
+    .hint{font-size:12px;max-width:calc(100vw - 40px);}
+    #legend{right:18px;bottom:auto;top:64px;font-size:10px;}
+    #legend .note{display:none;}
+    .card h1{font-size:32px;}
+    .veil{justify-content:center;padding:24px;}
+    #views{left:18px;right:18px;top:150px;bottom:auto;justify-content:center;}
+    #cta{bottom:auto;top:50%;transform:translate(-50%,-50%);}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="vig"></div>
+
+<header>
+  <div>
+    <div class="brand">编梁 <em>·</em> 北涧桥</div>
+    <div class="sub">交互原型 / 编木拱</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="tool" id="galleryBtn">节点图鉴</button>
+  <button class="tool" id="jointBtn">节点 · 开</button>
+  <button class="tool" id="voiceBtn">语音 · 开</button>
+  <button class="tool" id="soundBtn">声音 · 开</button>
+</header>
+
+<div id="hud">
+  <div class="ticks" id="ticks"></div>
+  <div class="stepnum" id="stepNum">01 / 13</div>
+  <div class="stepname" id="stepName">立牛头</div>
+  <div class="hint" id="hint"></div>
+  <div class="know" id="know"></div>
+</div>
+
+<div id="legend">
+  <div><b style="background:#c9b28e"></b>三节苗 · 第一系统</div>
+  <div><b style="background:#a9704f"></b>五节苗 · 第二系统</div>
+  <div><b style="background:#5b5146"></b>牛头 / 横向主梁</div>
+  <div class="note">几何与力流为示意 · 非测绘比例</div>
+</div>
+
+<div id="views">
+  <span class="vlabel">结构视图</span>
+  <button data-view="all" class="on" aria-pressed="true">全部</button>
+  <button data-view="arch" aria-pressed="false">拱架</button>
+  <button data-view="san" aria-pressed="false">三节苗</button>
+  <button data-view="wu" aria-pressed="false">五节苗</button>
+  <button id="sideBtn">侧视</button>
+  <span class="vsep"></span>
+  <button id="forceBtn" aria-pressed="false">力流</button>
+  <button id="breakBtn">抽一根</button>
+</div>
+
+<div id="toast"></div>
+
+<div id="tip">拖动 · 放进红框</div>
+<button id="autoBtn" class="tool">自动入卯</button>
+<div id="cta"><button id="ctaBtn"></button></div>
+
+<div class="veil" id="intro">
+  <div class="card">
+    <div class="kicker">编木拱 · 交互原型 01</div>
+    <h1>短木头，<br>怎么跨过 29 米。<small>北涧桥 · 泰顺泗溪 · 净跨 29 米</small></h1>
+    <p>拖动木料，把三节苗和五节苗编到一起。不用一颗钉子。拖不动就按回车。</p>
+    <p>一共 8 根苗、2 个牛头。拆支架、压桥面、起廊屋，看它能不能自己站住。</p>
+    <div class="rule"></div>
+    <div class="meta">
+      <div><b>51.87<span>m</span></b>全长</div>
+      <div><b>29<span>m</span></b>净跨</div>
+      <div><b>0<span>颗</span></b>铁钉</div>
+    </div>
+    <button id="startBtn">开始编拱</button>
+    <button id="startDetailBtn" class="ghost">匠作模式 · 一根一根来</button>
+  </div>
+</div>
+
+<div class="veil hide" id="end">
+  <div class="card">
+    <div class="kicker">合龙</div>
+    <h1>它自己站住了。<small>8 根短木跨过 29 米，最后压上廊屋。</small></h1>
+    <p>三节苗管跨度，五节苗把它别住，剪刀苗管前后。桥面压上去，节点只会更紧。</p>
+    <p>这就是「顶、别、撑、压」——无钉、无铆、无桥墩。</p>
+    <div class="rule"></div>
+    <div class="meta">
+      <div><b>3<span>+5</span></b>根苗</div>
+      <div><b>2<span>套</span></b>系统</div>
+      <div><b>0<span>颗</span></b>钉</div>
+    </div>
+    <button id="exploreBtn">看结构</button>
+    <button id="againBtn" class="ghost">再编一次</button>
+    <button id="quizBtn" class="ghost">小测验</button>
+    <button id="endGalleryBtn" class="ghost">节点图鉴</button>
+  </div>
+</div>
+
+<div class="veil hide" id="quiz">
+  <div class="card quizcard">
+    <div class="kicker" id="quizKicker">知识小测 · 1 / 3</div>
+    <h1 id="quizQ"></h1>
+    <div id="quizOpts"></div>
+    <p id="quizFb"></p>
+    <button id="quizNext">下一题</button>
+    <button id="quizClose" class="ghost">回到桥</button>
+  </div>
+</div>
+
+<div id="err">Three.js 没有加载成功。<br>请确认 vendor 目录和本文件在同一层。</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="copy.js"></script>
+<script src="audio.js"></script>
+<script src="environment.js"></script>
+<script src="joints.js"></script>
+<script src="stairs.js"></script>
+<script src="bridgehead.js"></script>
+<script src="interior.js"></script>
+<script src="precision-roof.js"></script>
+<script src="precision-materials.js"></script>
+<script src="copy-detail.js"></script>
+<script src="joint-gallery.js"></script>
+<script>
+(function(){
+  'use strict';
+  if(!window.THREE){ document.getElementById('err').style.display='flex'; return; }
+  const T = THREE;
+  let COPY = window.BridgeCopy || null;
+  const AUDIO = window.BridgeAudio || null;
+
+  /* ---------------------------------------------------------- 基本尺寸 */
+  const X = 14.5;              // 半跨 29 / 2
+  const HALF_LEN = 25.935;     // 51.87 / 2
+  const BAY = 2.5935;          // 20 间
+  const FRAME_HALF = 23.70;    // 20 间净长 47.40 / 2
+  const FRAME_BAY = 2.37;      // 21 榀
+  const Y0 = 1.10;             // 起拱点（实测 1.10）
+  const DECK_Y = 6.32;         // 桥面顶（中央最高点）
+  const CAMBER = 1.10;         // 桥面起拱：中央比端部高 1.10 m，廊屋跟着一起弯
+  function deckY(x){           // 拱背纵坡：抛物线，两端平到平台
+    const a = Math.min(Math.abs(x), FRAME_HALF) / FRAME_HALF;
+    return DECK_Y - CAMBER * a * a;
+  }
+  const TERRACE = { east: (window.BridgeEnv ? BridgeEnv.coords.terraceEast : 2.67),
+                    west: (window.BridgeEnv ? BridgeEnv.coords.terraceWest : 1.07) };
+  const WATER_Y = (window.BridgeEnv ? BridgeEnv.coords.waterY : -5.0);
+  const GROUND_BOTTOM = WATER_Y - 1.2;   // 支架落进河床
+  function groundAt(x, z){     // 与 environment.js 同源的地形高程
+    return (window.BridgeEnv && BridgeEnv.terrainY) ? BridgeEnv.terrainY(x, z) : -5.9;
+  }
+  /* 两套拱骨的叠压关系（precision-layout.md §3.1 标高链：三节苗上弦面 = 桥面 − 0.22）：
+   *   三节苗是主拱：三根粗料，从牛头起到 ±4.74 的平苗，上弦面 6.10（矢高 4.90），
+   *   桥面板直接压在平苗上，只隔一层桥板苗；
+   *   五节苗是副拱：五根细料，从牛头起，先搭在三节苗斜苗上（±9.48，隔节点木），
+   *   中段平苗从下面托住三节苗平苗（5.54 + 0.16 = 5.70 = 三节苗下皮），
+   *   两套斜苗在 x≈±7 交叉，编成一体。 */
+  const SAN = [[-X,Y0],[-4.74,5.90],[4.74,5.90],[X,Y0]];
+  const WU  = [[-X,Y0],[-9.48,4.03],[-4.74,5.54],[4.74,5.54],[9.48,4.03],[X,Y0]];
+  /* 编梁的排（PLAN.md 口径：3 排三节苗 + 5 排五节苗，排数待测绘/传承人核对）：
+   * 五节苗的排插在三节苗的排之间，从斜上方看才是「编」；所有排汇到牛头同一标高。 */
+  const ROWS = {
+    san: [-2.2, 0, 2.2],
+    wu:  [-2.85, -1.42, 0, 1.42, 2.85]
+  };
+  const SEC_SAN = { w: .58, h: .40 };   // 三节苗：粗
+  const SEC_WU  = { w: .44, h: .32 };   // 五节苗：细
+  const GROUND_Y = -5.9;
+  const PILE = new T.Vector3(0, -1.3, 8.8);
+  const ACC = 0xd75b3c;
+
+  /* ---------------------------------------------------------- 场景 */
+  const app = document.getElementById('app');
+  const scene = new T.Scene();
+  scene.background = new T.Color(0x14110f);
+  scene.fog = new T.FogExp2(0x14110f, 0.011);
+
+  const camera = new T.PerspectiveCamera(37, innerWidth/innerHeight, 0.1, 300);
+  // 默认机位：桥面 6.32、屋脊 11.0+，视线压到水面与廊屋之间，两端桥头屋装得下
+  const HOME_CAM = { pos: [20, 16.5, 84], target: [2, 5.2, 0] };
+  camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
+
+  const renderer = new T.WebGLRenderer({antialias:true, powerPreference:"high-performance"});
+  let qualityScale = 1;
+  function applyResolution(){
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const px = innerWidth * innerHeight * dpr * dpr;
+    const cap = 4.2e6;
+    const scale = px > cap ? Math.sqrt(cap / px) : 1;
+    renderer.setPixelRatio(dpr * scale * qualityScale);
+    renderer.setSize(innerWidth, innerHeight);
+  }
+  applyResolution();
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
+  app.appendChild(renderer.domElement);
+  let canvasRect = renderer.domElement.getBoundingClientRect();
+
+  const controls = new T.OrbitControls(camera, renderer.domElement);
+  controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.enablePan = false;
+  controls.minDistance = 8;
+  controls.maxDistance = 130;
+  controls.minPolarAngle = 0.35;
+  controls.maxPolarAngle = 1.52;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.22;
+  let cameraFocus = false;
+
+  /* ---------------------------------------------------------- 光 */
+  const hemi = new T.HemisphereLight(0xb9c8c4, 0x2a1c13, 0.52);
+  scene.add(hemi);
+
+  const key = new T.DirectionalLight(0xffd6a8, 2.2);
+  key.position.set(16, 24, 18);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.left = -34;
+  key.shadow.camera.right = 34;
+  key.shadow.camera.top = 26;
+  key.shadow.camera.bottom = -14;
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 80;
+  key.shadow.bias = -0.0006;
+  scene.add(key);
+
+  const fill = new T.DirectionalLight(0x7f9fae, 0.4);
+  fill.position.set(-24, 12, -16);
+  scene.add(fill);
+
+  const front = new T.DirectionalLight(0x9fb6c0, 0.85);
+  front.position.set(0, 2, 26);
+  scene.add(front);
+
+  const bounce = new T.PointLight(0xffb27a, 6, 30, 2);
+  bounce.position.set(0, 1.4, 6);
+  scene.add(bounce);
+
+  const rim = new T.PointLight(0xffb27a, 2.5, 40, 2);
+  rim.position.set(-9, 9, -8);
+  scene.add(rim);
+
+  /* ---------------------------------------------------------- 地与水 */
+  function groundTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(256,256,20,256,256,256);
+    grd.addColorStop(0,'#241d17');
+    grd.addColorStop(.55,'#1d1814');
+    grd.addColorStop(1,'#14110f');
+    g.fillStyle = grd; g.fillRect(0,0,512,512);
+    const t = new T.CanvasTexture(c);
+    t.encoding = T.sRGBEncoding;
+    return t;
+  }
+  const ground = new T.Mesh(
+    new T.PlaneGeometry(220, 220),
+    new T.MeshStandardMaterial({map:groundTexture(), roughness:1, metalness:0})
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = GROUND_Y;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const river = new T.Mesh(
+    new T.PlaneGeometry(46, 8),
+    new T.MeshStandardMaterial({color:new T.Color(0x020708).convertSRGBToLinear(), roughness:1, metalness:0, transparent:true, opacity:.55})
+  );
+  river.rotation.x = -Math.PI/2;
+  river.position.set(0, GROUND_Y + 0.02, 0);
+  river.receiveShadow = true;
+  scene.add(river);
+
+  /* 远山与天色：只做一层，压住地平线 */
+  function skyTexture(){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    const g = c.getContext('2d');
+    const grd = g.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, '#0b0908');
+    grd.addColorStop(.45, '#15110d');
+    grd.addColorStop(.62, '#2a2018');
+    grd.addColorStop(.75, '#17120e');
+    grd.addColorStop(1, '#14110f');
+    g.fillStyle = grd; g.fillRect(0, 0, 512, 256);
+    const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+    return t;
+  }
+  const sky = new T.Mesh(
+    new T.PlaneGeometry(220, 60),
+    new T.MeshBasicMaterial({map:skyTexture(), depthWrite:false, fog:false})
+  );
+  sky.position.set(0, 10, -62);
+  scene.add(sky);
+
+  function hillTexture(){
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#221a14';
+    g.beginPath();
+    g.moveTo(0, 256);
+    const pts = [[0,150],[70,118],[150,142],[240,92],[330,120],[430,78],[520,112],[610,86],[700,124],[790,96],[880,132],[960,104],[1024,120]];
+    pts.forEach(function(p){ g.lineTo(p[0], p[1]); });
+    g.lineTo(1024, 256); g.closePath(); g.fill();
+    const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+    return t;
+  }
+  const hills = new T.Mesh(
+    new T.PlaneGeometry(180, 45),
+    new T.MeshBasicMaterial({map:hillTexture(), transparent:true, depthWrite:false, opacity:.65, fog:true})
+  );
+  hills.position.set(0, 0, -48);
+  scene.add(hills);
+
+  /* 环境：青山绿水（BridgeEnv 缺失时退回上面的深色场景） */
+  let env = null, envUpdate = null;
+  if(window.BridgeEnv){
+    env = window.BridgeEnv.build(scene, T, {lights:true});
+    envUpdate = env.update;
+    [hemi, fill, front, bounce, rim].forEach(function(l){ scene.remove(l); });
+    ground.visible = false;
+    river.visible = false;
+    sky.visible = false;
+    hills.visible = false;
+    scene.remove(key);
+    if(env.sun){
+      const sun = env.sun;
+      sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.camera.left = -40;
+      sun.shadow.camera.right = 40;
+      sun.shadow.camera.top = 30;
+      sun.shadow.camera.bottom = -18;
+      sun.shadow.camera.near = 1;
+      sun.shadow.camera.far = 140;
+      sun.shadow.bias = -0.0006;
+      sun.shadow.normalBias = 0.03;
+    }
+    scene.background = new T.Color(0xb9d2d2);
+    // 廊屋内的暖色反弹光：屋面挡掉直射后，里面只剩天光会太黑；
+    // 三盏不投影的点光沿走道布，也顺带给檐口开口一点暖意
+    [[0, 8.0, 0, 5.5, 30], [-15, 7.4, 0, 3.2, 22], [15, 7.4, 0, 3.2, 22]].forEach(function(cfg){
+      const hall = new T.PointLight(0xffd9a8, cfg[3], cfg[4], 2);
+      hall.position.set(cfg[0], cfg[1], cfg[2]);
+      scene.add(hall);
+    });
+  }
+
+  /* ---------------------------------------------------------- 材质 */
+  function mat(hex, o){
+    o = o || {};
+    return new T.MeshStandardMaterial({
+      color:new T.Color(hex).convertSRGBToLinear(), roughness:o.roughness!==undefined?o.roughness:0.82,
+      metalness:o.metalness||0, emissive:new T.Color(o.emissive||0x000000).convertSRGBToLinear(),
+      emissiveIntensity:o.emissiveIntensity||0, transparent:!!o.transparent,
+      opacity:o.opacity!==undefined?o.opacity:1
+    });
+  }
+
+  function woodTexture(){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+    const g = c.getContext('2d');
+    g.fillStyle = '#e4dccd'; g.fillRect(0, 0, 512, 512);
+    for(let i=0;i<64;i++){
+      const y = Math.random()*512;
+      const a = .03 + Math.random()*.09;
+      g.strokeStyle = 'rgba(96,68,42,' + a + ')';
+      g.lineWidth = .6 + Math.random()*1.4;
+      g.beginPath();
+      for(let x=0;x<=512;x+=16){
+        const yy = y + Math.sin(x/512*Math.PI*2 + i)*2.5 + (Math.random()-.5)*1.2;
+        if(x===0) g.moveTo(x,yy); else g.lineTo(x,yy);
+      }
+      g.stroke();
+    }
+    for(let k=0;k<4;k++){
+      const x = 40 + Math.random()*432, y = 40 + Math.random()*432;
+      const grd = g.createRadialGradient(x,y,1,x,y,20);
+      grd.addColorStop(0,'rgba(84,56,32,.28)');
+      grd.addColorStop(1,'rgba(84,56,32,0)');
+      g.fillStyle = grd;
+      g.beginPath(); g.arc(x,y,20,0,Math.PI*2); g.fill();
+    }
+    const t = new T.CanvasTexture(c);
+    t.wrapS = t.wrapT = T.RepeatWrapping;
+    t.encoding = T.sRGBEncoding;
+    t.anisotropy = 4;
+    return t;
+  }
+  const WOOD_TEX = woodTexture();
+  function woodMat(hex, rough){
+    const m = mat(hex, {roughness:rough===undefined?.8:rough});
+    m.map = WOOD_TEX;
+    m.bumpMap = WOOD_TEX;
+    m.bumpScale = .015;
+    return m;
+  }
+
+  function tileTexture(){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#9aa0a2'; g.fillRect(0, 0, 256, 256);
+    for(let y=0;y<256;y+=16){
+      g.fillStyle = 'rgba(42,47,49,.42)'; g.fillRect(0, y, 256, 2);
+      g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(0, y+2, 256, 1);
+    }
+    for(let x=0;x<256;x+=32){
+      g.fillStyle = 'rgba(42,47,49,.18)'; g.fillRect(x, 0, 1, 256);
+    }
+    const t = new T.CanvasTexture(c);
+    t.wrapS = t.wrapT = T.RepeatWrapping;
+    t.encoding = T.sRGBEncoding;
+    return t;
+  }
+  const TILE_TEX = tileTexture();
+
+  const MAT_SAN = woodMat(0xb08f63);
+  const MAT_WU  = woodMat(0x7d3b28);
+  const MAT_HEAD = woodMat(0x2e251d, .9);
+  const MAT_STONE = mat(0x3b342c, {roughness:.95});
+  const MAT_PROP = mat(0x39403b, {transparent:true, opacity:.55, roughness:1});
+  const MAT_JOINT = woodMat(0x32281f, .8);
+  const MAT_SCISSOR = woodMat(0x5a3b2b, .9);
+  const MAT_DECK = woodMat(0x6b4c31, .88);
+  const MAT_GAL = woodMat(0x46311f, .9);
+  const MAT_ROOF = mat(0x453f37, {roughness:.92});
+  MAT_ROOF.map = TILE_TEX;
+
+  /* 精细材质层：precision-materials 在场时，木料补法线+粗糙度（保留逐根色差），
+     瓦与石材换成带垄沟/砌缝的完整程序化 PBR（颜色烘进 albedo，color 提白） */
+  if(window.BridgeMaterials){
+    try{
+      [MAT_SAN, MAT_WU, MAT_HEAD, MAT_JOINT, MAT_SCISSOR, MAT_DECK, MAT_GAL].forEach(function(m){
+        window.BridgeMaterials.upgrade(T, m, 'wood');
+      });
+      const tile = window.BridgeMaterials.tile(T, {color:0x59616a, repeat:[16,3]});
+      if(tile){
+        MAT_ROOF.map = tile.map; MAT_ROOF.normalMap = tile.normalMap;
+        MAT_ROOF.roughnessMap = tile.roughnessMap; MAT_ROOF.roughness = tile.roughness;
+        MAT_ROOF.normalScale = tile.normalScale.clone();
+        MAT_ROOF.color.set(0xffffff);
+        MAT_ROOF.needsUpdate = true;
+      }
+      const stone = window.BridgeMaterials.stone(T, {color:0x645d50, repeat:[3,1.6]});
+      if(stone){
+        MAT_STONE.map = stone.map; MAT_STONE.normalMap = stone.normalMap;
+        MAT_STONE.roughnessMap = stone.roughnessMap; MAT_STONE.roughness = stone.roughness;
+        MAT_STONE.normalScale = stone.normalScale.clone();
+        MAT_STONE.color.set(0xffffff);
+        MAT_STONE.needsUpdate = true;
+      }
+    }catch(e){}
+  }
+
+  const bridge = new T.Group();   // 只装结构，拆架时要整体微沉
+  scene.add(bridge);
+  const site = new T.Group();     // 桥台、支架，不动
+  scene.add(site);
+
+  /* ---------------------------------------------------------- 构件 */
+  function beam2D(a, b, z, h, w, material){
+    const dx = b[0]-a[0], dy = b[1]-a[1];
+    const len = Math.hypot(dx, dy);
+    const geo = new T.CylinderGeometry(w*.5, w*.5, len + .3, 14);
+    const m = new T.Mesh(geo, material);
+    m.position.set((a[0]+b[0])/2, (a[1]+b[1])/2, z);
+    m.rotation.z = Math.atan2(dy, dx) - Math.PI/2;
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
+  }
+  function addEdges(m){
+    const e = new T.LineSegments(
+      new T.EdgesGeometry(m.geometry),
+      new T.LineBasicMaterial({color:0x241c15, transparent:true, opacity:.26})
+    );
+    m.add(e);
+  }
+  function beam3D(p1, p2, thick, material){
+    const a = new T.Vector3(p1[0],p1[1],p1[2]);
+    const b = new T.Vector3(p2[0],p2[1],p2[2]);
+    const dir = new T.Vector3().subVectors(b, a);
+    const len = dir.length();
+    const geo = new T.CylinderGeometry(thick*.5, thick*.5, len, 12);
+    const m = new T.Mesh(geo, material);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0), dir.clone().normalize());
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
+  }
+  function block(x, y, z, sx, sy, sz, material){
+    const m = new T.Mesh(new T.BoxGeometry(sx, sy, sz), material);
+    m.position.set(x, y, z);
+    m.castShadow = true; m.receiveShadow = true;
+    addEdges(m);
+    return m;
+  }
+  /* 竖向木销（带两端销帽）：苗端接头与节点线的穿锁件 */
+  function pegMesh(x, y, z, len){
+    const g = new T.Group();
+    const shaft = new T.Mesh(new T.CylinderGeometry(.08, .08, len, 10), MAT_JOINT);
+    shaft.castShadow = true;
+    g.add(shaft);
+    [-1, 1].forEach(function(s){
+      const cap = new T.Mesh(new T.CylinderGeometry(.125, .125, .05, 10), MAT_JOINT);
+      cap.position.y = s * (len / 2 + .025);
+      cap.castShadow = true;
+      g.add(cap);
+    });
+    g.position.set(x, y, z);
+    return g;
+  }
+  function joint(x, y, z, system){
+    /* 苗端接头：竖向木销穿透搭接缝（原来是一根躺倒的粗圆柱，读不出「销」） */
+    const g = pegMesh(x, y, z, .8);
+    g.traverse(function(o){ if(o.isMesh && system) o.userData.system = system; });
+    return g;
+  }
+
+  /* ---------------------------------------------------------- 两岸桥台 */
+  /* 桥台石从水面以下 0.6 m 一直砌到牛头底下（0.26），外缘压在 13.2 的水线上 */
+  [-1, 1].forEach(function(s){
+    const top = 0.26, bottom = WATER_Y - 0.7;
+    const abut = block(s*15.4, (top + bottom)/2, 0, 4.4, top - bottom, 7.6, MAT_STONE);
+    site.add(abut);
+  });
+
+  /* ---------------------------------------------------------- 临时支架 */
+  const props = new T.Group();
+  [-3.9, 3.9].forEach(function(x){
+    [-2.3, 2.3].forEach(function(z){
+      props.add(block(x, (GROUND_BOTTOM + 5.7)/2, z, .18, 5.7 - GROUND_BOTTOM, .18, MAT_PROP));
+    });
+  });
+  props.visible = false;
+  site.add(props);
+
+  /* ---------------------------------------------------------- 步骤 */
+  let steps = [];
+  function buildSimpleSteps(){
+    const arr = [];
+    arr.push({kind:'beam', label:'立牛头 · 左岸', hint:'牛头是横着的主梁，一头坐进桥台石，两头把三节苗、五节苗的推力横着收住。', blockTarget:{x:-X, y:Y0, z:0, sx:2.0, sy:1.7, sz:6.8}, material:MAT_HEAD});
+    arr.push({kind:'beam', label:'立牛头 · 右岸', hint:'另一岸。两套拱骨都从这块牛头上起，桥的所有推力最后落到桥台石上。', blockTarget:{x:X, y:Y0, z:0, sx:2.0, sy:1.7, sz:6.8}, material:MAT_HEAD});
+    const SAN_HINTS = [
+      '第一系统，三根木头。这根从岸边顶到拱顶，受压最狠。',
+      '中间这根同时是梁。短木接力的关键，就在这一段的接头上。',
+      '第三根。三节苗架好了，但它现在还是个机构，靠支架撑着。'
+    ];
+    for(let i=0;i<3;i++){
+      arr.push({kind:'beam', system:'san', index:i, label:'三节苗 · ' + ['左','中','右'][i], hint:SAN_HINTS[i], material:MAT_SAN});
+    }
+    const WU_HINTS = [
+      '第二系统开始。五根更短的木料，从下面穿进第一系统。',
+      '它比三节苗更尖。注意它和三节苗是一上一下错开的。',
+      '中间这一根，正好压在三节苗的横梁上面，木销把两套拱别死。',
+      '第四根。两套拱开始互相别住，不再各站各的。',
+      '第五根。合上了。现在它不是一个机构，是一个结构。'
+    ];
+    for(let i=0;i<5;i++){
+      arr.push({kind:'beam', system:'wu', index:i, label:'五节苗 · ' + (i+1), hint:WU_HINTS[i], material:MAT_WU});
+    }
+    arr.push({kind:'action', id:'braces', label:'打剪刀苗', hint:'剪刀苗不管上下，管前后。桥要晃，先把它锁死。', cta:'打剪刀苗'});
+    arr.push({kind:'action', id:'props', label:'拆架', hint:'临时支架撤掉。桥会自己沉一点，然后站住。', cta:'拆掉支架'});
+    arr.push({kind:'action', id:'load', label:'压载', hint:'桥面还没铺，先压一下。越压，节点咬得越紧。', cta:'压上去'});
+    arr.push({kind:'action', id:'gallery', label:'起廊屋', hint:'桥面压住拱。立柱、上梁、盖瓦，廊屋把拱锁成一座桥。', cta:'起廊屋'});
+    return arr;
+  }
+
+  function buildDetailSteps(){
+    const arr = buildSimpleSteps();
+    arr.pop();
+    arr.splice(11, 0, {kind:'action', id:'ties', label:'打横串', hint:'横串把两套苗横向串住，节点不再左右错动。', cta:'打横串'});
+    arr.push({kind:'action', id:'deck', label:'铺桥面', hint:'桥面从中间往两边铺，每一块都压在拱和将军柱上。', cta:'铺桥面'});
+    arr.push({kind:'action', id:'posts', label:'立将军柱', hint:'将军柱从拱顶顶到桥面，把桥面的重量交给拱。', cta:'立将军柱'});
+    arr.push({kind:'action', id:'columns', label:'立柱', hint:'廊柱一根一根立起来，柱脚落在桥面的梁上。', cta:'立柱'});
+    arr.push({kind:'action', id:'beams', label:'上梁', hint:'柱顶横向连梁，廊屋的骨架才站得住。', cta:'上梁'});
+    arr.push({kind:'action', id:'purlins', label:'架檩', hint:'檩条架在梁上，托住上面的椽和瓦。', cta:'架檩'});
+    arr.push({kind:'action', id:'rafters', label:'铺椽', hint:'椽条一根挨一根铺过去，屋面才有坡度。', cta:'铺椽'});
+    arr.push({kind:'action', id:'roof', label:'盖瓦', hint:'瓦压住椽，廊屋替木头挡雨。', cta:'盖瓦'});
+    arr.push({kind:'action', id:'pavilion', label:'起楼阁', hint:'中央重檐楼阁，把整座桥的轮廓挑起来。', cta:'起楼阁'});
+    arr.push({kind:'action', id:'finishAll', label:'收尾', hint:'栏杆、长凳、台阶。人可以走上来了。', cta:'收尾'});
+    return arr;
+  }
+
+  function buildSteps(mode){
+    state.mode = mode || 'quick';
+    COPY = (state.mode === 'detail' && window.BridgeCopyDetail) ? window.BridgeCopyDetail : (window.BridgeCopy || null);
+    Object.keys(spokenSteps).forEach(function(k){ delete spokenSteps[k]; });
+    steps = (state.mode === 'detail') ? buildDetailSteps() : buildSimpleSteps();
+    state.jointFocus = (state.mode === 'detail');
+    const jb = document.getElementById('jointBtn');
+    if(jb){
+      jb.style.display = state.mode === 'detail' ? '' : 'none';
+      jb.textContent = state.jointFocus ? '节点 · 开' : '节点 · 关';
+    }
+    renderTicks();
+  }
+
+  /* ---------------------------------------------------------- 状态 */
+  const state = {step:0, started:false, busy:false, dragging:false, active:null, sound:true, voice:true, force:false, mode:'quick', jointFocus:false};
+  const placed = [];        // {mesh,a,b,z,dir}
+  const braces = [];
+  let loadBlock = null;
+  let gallery = null, galleryMats = null, galleryGroups = null, galleryRoof = null, galleryDetailParts = {};
+  let detailedNodes = {};
+  let forceGroup = null;
+  let audio = null;
+
+  /* ---------------------------------------------------------- 工具 */
+  const clock = new T.Clock();
+  const tweens = [];
+  function tweenVec(obj, to, dur, ease, done){
+    const v = (obj && obj.isVector3) ? obj : (obj && obj.position);   // 允许直接传 Vector3（镜头位置）
+    if(!v || !to) return;
+    tweens.push({obj:v, from:{x:v.x,y:v.y,z:v.z}, to:to, t:0, dur:dur, ease:ease||easeOut, done:done});
+  }
+  function tweenNum(obj, key, to, dur, ease, done){
+    tweens.push({obj:obj, key:key, from:obj[key], to:to, t:0, dur:dur, ease:ease||easeOut, done:done, numeric:true});
+  }
+  function easeOut(t){ return 1 - Math.pow(1-t, 3); }
+  function easeInOut(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+  function stepTweens(dt){
+    for(let i=tweens.length-1;i>=0;i--){
+      const w = tweens[i];
+      w.t += dt;
+      const k = Math.min(1, w.t / w.dur), e = w.ease(k);
+      if(w.numeric){ w.obj[w.key] = w.from + (w.to - w.from) * e; }
+      else{
+        w.obj.set(
+          w.from.x + (w.to.x - w.from.x) * e,
+          w.from.y + (w.to.y - w.from.y) * e,
+          w.from.z + (w.to.z - w.from.z) * e
+        );
+      }
+      if(k >= 1){ tweens.splice(i,1); if(w.done) w.done(); }
+    }
+  }
+
+  function updateShadows(){
+    renderer.shadowMap.needsUpdate = true;
+  }
+
+  /* ---------------------------------------------------------- 声音 */
+  function initAudio(){
+    if(AUDIO){ AUDIO.init(); return; }
+    if(audio) return;
+    try{ audio = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audio = null; }
+  }
+  function knock(freq, dur, vol){
+    if(AUDIO){
+      const pitch = freq ? Math.max(.6, Math.min(1.5, freq / 140)) : 1;
+      AUDIO.sfx('knock', {pitch:pitch, gain: Math.min(.9, (vol || .35) * 1.6)});
+      return;
+    }
+    if(!audio || !state.sound) return;
+    const t = audio.currentTime;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq || 150, t);
+    o.frequency.exponentialRampToValueAtTime((freq || 150) * .45, t + (dur || .16));
+    g.gain.setValueAtTime(vol || .35, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + (dur || .16) + .04);
+    o.connect(g).connect(audio.destination);
+    o.start(t); o.stop(t + (dur || .16) + .08);
+  }
+  function creak(){
+    if(AUDIO){ AUDIO.sfx('creak'); return; }
+    if(!audio || !state.sound) return;
+    const t = audio.currentTime;
+    const len = Math.floor(audio.sampleRate * .7);
+    const buf = audio.createBuffer(1, len, audio.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = audio.createBufferSource(); src.buffer = buf;
+    const f = audio.createBiquadFilter(); f.type='bandpass'; f.frequency.value=320; f.Q.value=2;
+    const g = audio.createGain(); g.gain.value=.18;
+    src.connect(f).connect(g).connect(audio.destination);
+    src.start(t);
+  }
+
+  /* ---------------------------------------------------------- 场景构建：单根苗 */
+  function nodeAt(system, i){ return system === 'san' ? SAN[i] : WU[i]; }
+  function segmentCount(system){ return system === 'san' ? 3 : 5; }
+  function sanY(x){
+    const ax = Math.abs(x);
+    if(ax >= X) return Y0;
+    if(ax <= 4.74) return 5.90;
+    return Y0 + (X - ax) * (5.90 - Y0) / (X - 4.74);
+  }
+
+  function makeSegment(system, i, material){
+    const a = nodeAt(system, i), b = nodeAt(system, i+1);
+    const sec = system === 'san' ? SEC_SAN : SEC_WU;
+    const m = beam2D(a, b, ROWS[system][0], sec.w, sec.w, material.clone());
+    m.material.color.multiplyScalar(.9 + Math.random()*.18);
+    m.userData = {a:a, b:b, z:ROWS[system][0], system:system, seg:i, row:0};
+    return m;
+  }
+
+  function addJointsAt(m){
+    const z = m.userData.z, a = m.userData.a, b = m.userData.b;
+    bridge.add(joint(a[0], a[1], z, m.userData.system));
+    bridge.add(joint(b[0], b[1], z, m.userData.system));
+  }
+
+  /* ---------------------------------------------------------- 步骤生成 */
+  function currentStep(){ return steps[state.step]; }
+
+  function beginStep(){
+    state.busy = false;
+    updateShadows();
+    const s = currentStep();
+    if(!s) return;
+    if(s.system === 'san' && s.index === 0 && !props.visible){
+      props.visible = true;
+      MAT_PROP.opacity = 0;
+      tweenNum(MAT_PROP, 'opacity', .45, .6);
+      creak();
+    }
+    renderHUD();
+    const voiceSteps = VOICE_STEPS[state.mode] || VOICE_STEPS.quick;
+    if(AUDIO && COPY && voiceSteps.indexOf(state.step) >= 0 && !spokenSteps[state.step]){
+      const idx = state.step;
+      const copyRef = COPY;
+      spokenSteps[idx] = true;
+      setTimeout(function(){
+        const line = copyRef.steps[idx];
+        if(line && line.voice) AUDIO.say(line.voice);
+      }, 360);
+    }
+    if(s.kind === 'beam'){ spawnDraggable(s); autoBtn.classList.add('show'); }
+    else{ autoBtn.classList.remove('show'); showCTA(s.cta, runAction); }
+  }
+
+  function spawnDraggable(s){
+    let mesh;
+    if(s.system){
+      mesh = makeSegment(s.system, s.index, s.material);
+    }else{
+      const t = s.blockTarget;
+      mesh = block(t.x, t.y, t.z, t.sx, t.sy, t.sz, s.material.clone());
+      mesh.userData = {block:true};
+    }
+    // 最终位置
+    const targetPos = mesh.position.clone();
+    const targetQuat = mesh.quaternion.clone();
+    const targetZ = mesh.position.z;
+
+    // 取料位：在桥的正前方，保持最终高度与角度，像被吊着
+    const stagingZ = 7.5;
+    const staging = new T.Vector3(targetPos.x * 0.3, targetPos.y, stagingZ);
+    mesh.position.copy(staging);
+    bridge.add(mesh);
+
+    // 高亮描边
+    const outline = new T.LineSegments(
+      new T.EdgesGeometry(mesh.geometry),
+      new T.LineBasicMaterial({color:0xff8a63, transparent:true, opacity:.95, depthWrite:false})
+    );
+    mesh.add(outline);
+    mesh.userData.outline = outline;
+
+    // 目标处画线框
+    const ghostMat = new T.LineBasicMaterial({color:ACC, transparent:true, opacity:.6, depthWrite:false});
+    const ghost = new T.LineSegments(new T.EdgesGeometry(mesh.geometry), ghostMat);
+    ghost.position.copy(targetPos);
+    ghost.quaternion.copy(targetQuat);
+    bridge.add(ghost);
+
+    const active = {
+      mesh:mesh, ghost:ghost, targetPos:targetPos, targetQuat:targetQuat,
+      targetZ:targetZ, stagingZ:stagingZ, staging:staging, near:false, dragging:false,
+      offset:new T.Vector3(),
+      plane:new T.Plane(new T.Vector3(0,0,1), -targetZ)
+    };
+    state.active = active;
+
+    // 提示脉冲
+    mesh.material.emissive = new T.Color(0x3a1a10);
+    mesh.material.emissiveIntensity = .55;
+  }
+
+  /* ---------------------------------------------------------- 拖拽 */
+  const raycaster = new T.Raycaster();
+  const pointer = new T.Vector2();
+  const hitPoint = new T.Vector3();
+
+  function setPointer(e){
+    pointer.x = ((e.clientX - canvasRect.left) / canvasRect.width) * 2 - 1;
+    pointer.y = -((e.clientY - canvasRect.top) / canvasRect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+  }
+
+  renderer.domElement.addEventListener('pointerdown', function(e){
+    if(cameraFocus){ cancelJointFocus(); }
+    if(!state.started || state.busy || !state.active || state.active.dragging) return;
+    setPointer(e);
+    const hits = raycaster.intersectObject(state.active.mesh, false);
+    if(!hits.length) return;
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    controls.enabled = false;
+    controls.autoRotate = false;
+    renderer.domElement.style.cursor = 'grabbing';
+
+    const a = state.active;
+    a.dragging = true;
+    state.dragging = true;
+
+    // 抓取点落到构件所在平面
+    raycaster.ray.intersectPlane(a.plane, hitPoint);
+    a.offset.set(0, 0, 0);
+    a.mesh.position.set(hitPoint.x, hitPoint.y, a.targetZ);
+    a.mesh.material.emissiveIntensity = 1.1;
+    a.mesh.castShadow = false;
+    knock(120, .1, .12);
+  }, true);
+
+  window.addEventListener('pointermove', function(e){
+    const a = state.active;
+    if(!a || !a.dragging) return;
+    setPointer(e);
+    if(!raycaster.ray.intersectPlane(a.plane, hitPoint)) return;
+    a.mesh.position.set(hitPoint.x, hitPoint.y, a.targetZ);
+
+    const dx = a.mesh.position.x - a.targetPos.x;
+    const dy = a.mesh.position.y - a.targetPos.y;
+    a.near = Math.hypot(dx, dy) < 1.5;
+    a.ghost.material.opacity = a.near ? .95 : .4;
+    a.ghost.material.color.setHex(a.near ? 0xff8a63 : ACC);
+  });
+
+  window.addEventListener('pointerup', function(){
+    const a = state.active;
+    if(!a || !a.dragging) return;
+    a.dragging = false;
+    state.dragging = false;
+    controls.enabled = true;
+    renderer.domElement.style.cursor = 'grab';
+
+    if(a.near){
+      placeActive();
+    }else{
+      a.mesh.material.emissiveIntensity = .55;
+      a.mesh.castShadow = true;
+      updateShadows();
+      tweenVec(a.mesh, a.staging, .35, easeOut);
+    }
+  });
+
+  function placeActive(){
+    const a = state.active;
+    state.busy = true;
+    autoBtn.classList.remove('show');
+    a.ghost.visible = false;
+    a.mesh.material.emissiveIntensity = 0;
+    a.mesh.castShadow = true;
+    if(a.mesh.userData.outline){
+      a.mesh.remove(a.mesh.userData.outline);
+      a.mesh.userData.outline = null;
+    }
+    // tween 回调由 RAF 驱动；后台/失焦标签 RAF 会被节流，
+    // 用 setTimeout 兜底保证 finishPlacement 恰好执行一次，流程不卡死
+    let settled = false;
+    function settle(){
+      if(settled) return;
+      settled = true;
+      a.mesh.position.copy(a.targetPos);
+      a.mesh.quaternion.copy(a.targetQuat);
+      finishPlacement(a);
+    }
+    tweenVec(a.mesh, a.targetPos, .16, easeOut, settle);
+    setTimeout(settle, 420);
+  }
+
+  function finishPlacement(a){
+    const mesh = a.mesh;
+    knock(150, .18, .4);
+    setTimeout(function(){ knock(95, .22, .22); }, 55);
+
+    try{
+      if(mesh.userData.block){
+        // 牛头落地
+        placed.push({mesh:mesh, block:true});
+        addHeadDetails(mesh);
+        addBlockJoints(mesh);
+      }else{
+      addJointsAt(mesh);
+      // 力流方向：从拱顶流向岸边
+      const mm = mesh.userData;
+      mm.dir = Math.abs(mm.a[0]) < Math.abs(mm.b[0]) ? 1 : -1;
+
+      // 其余排成排复制：三节苗共 3 排 / 五节苗共 5 排（PLAN.md 口径）
+      const sysRows = ROWS[mm.system];
+      for(let ri = 1; ri < sysRows.length; ri++){
+        const zr = sysRows[ri], dz = zr - sysRows[0];
+        const c = mesh.clone(true);
+        c.material = mesh.material.clone();
+        c.material.transparent = true;
+        c.material.opacity = 0;
+        c.position.z = mesh.position.z;
+        bridge.add(c);
+        tweenNum(c.material, 'opacity', 1, .3, easeOut, function(){
+          c.material.transparent = false;
+          c.material.opacity = 1;
+          c.material.needsUpdate = true;
+        });
+        tweenVec(c, new T.Vector3(mesh.position.x, mesh.position.y, mesh.position.z + dz), .32, easeOut);
+        placed.push({mesh:c, a:mesh.userData.a, b:mesh.userData.b, z:mesh.userData.z + dz, dir:mm.dir});
+      }
+      placed.push({mesh:mesh, a:mesh.userData.a, b:mesh.userData.b, z:mesh.userData.z, dir:mm.dir});
+    }
+
+    if(!mesh.userData.block && window.BridgeJoints && state.mode === 'detail'){
+      try{
+        const a = mesh.userData.a, b = mesh.userData.b, z = mesh.userData.z;
+        const p = (a[1] >= b[1]) ? a : b;
+        const key = p[0].toFixed(2) + ',' + p[1].toFixed(2) + ',' + z.toFixed(2);
+        if(!detailedNodes[key]){
+          detailedNodes[key] = true;
+          const nodeGroup = window.BridgeJoints.node(T, {x:p[0], y:p[1], z:z, members:[{a:a, b:b, system:mesh.userData.system}], system:mesh.userData.system}, {});
+          if(nodeGroup){
+            nodeGroup.traverse(function(o){ o.userData.system = mesh.userData.system; });
+            bridge.add(nodeGroup);
+          }
+        }
+      }catch(e){}
+    }
+    }catch(e){ console.error('placement failed', e); }
+
+    state.active = null;
+    updateShadows();
+
+    if(state.mode === 'detail' && state.jointFocus){
+      try{
+        let point = null, note = null;
+        const idx = state.step;
+        if(COPY && COPY.steps && COPY.steps[idx] && COPY.steps[idx].joint) note = '节点 · ' + COPY.steps[idx].joint;
+        if(mesh.userData.block){
+          point = new T.Vector3(mesh.position.x, mesh.position.y, mesh.position.z);
+        }else{
+          const a = mesh.userData.a, b = mesh.userData.b, z = mesh.userData.z;
+          const p = (a[1] >= b[1]) ? a : b;
+          point = new T.Vector3(p[0], p[1], z);
+        }
+        if(point) focusJoint(point, note);
+      }catch(e){
+        cameraFocus = false;
+        controls.enabled = true;
+      }
+    }
+
+    setTimeout(function(){
+      state.step++;
+      beginStep();
+    }, state.mode === 'detail' ? (state.jointFocus ? 4700 : 2400) : 480);
+  }
+
+  function addHeadDetails(head){
+    if(window.BridgeJoints && state.mode === 'detail'){
+      try{
+        const g = window.BridgeJoints.headMortises(T, head, {headSlotZ: [-2.2, 0, 2.2]});
+        if(g) head.add(g);
+        return;
+      }catch(e){}
+    }
+    const slotMat = mat(0x150f0a, {roughness:.92});
+    [-2.3, 0, 2.3].forEach(function(z){
+      const slot = new T.Mesh(new T.BoxGeometry(1.5, .05, .34), slotMat);
+      slot.position.set(0, .665, z);
+      head.add(slot);
+      const peg = new T.Mesh(new T.CylinderGeometry(.075, .075, .5, 8), MAT_JOINT);
+      peg.rotation.z = Math.PI/2;
+      peg.position.set(.34, .7, z);
+      head.add(peg);
+    });
+  }
+
+  function addBlockJoints(mesh){
+    const p = mesh.position;
+    [[-0.7,0],[0.7,0]].forEach(function(o){
+      const j = joint(p.x + o[0], p.y, p.z + 2.2);
+      j.scale.set(1.4,1.4,1.4);
+      bridge.add(j);
+    });
+  }
+
+  /* ---------------------------------------------------------- 动作 */
+  function showCTA(label, fn){
+    const cta = document.getElementById('cta');
+    const btn = document.getElementById('ctaBtn');
+    btn.textContent = label;
+    btn.onclick = function(){ initAudio(); fn(); };
+    cta.classList.add('show');
+  }
+  function hideCTA(){ document.getElementById('cta').classList.remove('show'); }
+
+  function runAction(){
+    const s = currentStep();
+    if(!s || s.kind !== 'action' || state.busy) return;
+    hideCTA();
+    if(s.id === 'braces') doBraces();
+    if(s.id === 'props') doRemoveProps();
+    if(s.id === 'load') doLoad();
+    if(s.id === 'gallery') doGallery();
+    if(s.id === 'ties') doTies();
+    if(s.id === 'deck') doDeck();
+    if(s.id === 'posts') doPosts();
+    if(s.id === 'columns') doColumns();
+    if(s.id === 'beams') doBeams();
+    if(s.id === 'purlins') doPurlins();
+    if(s.id === 'rafters') doRafters();
+    if(s.id === 'roof') doRoof();
+    if(s.id === 'pavilion') doPavilion();
+    if(s.id === 'finishAll') doFinishAll();
+  }
+
+  function buildBraces(){
+    // 剪刀苗：两对 X 形斜撑，横跨全宽，卡在两榀拱架之间抗侧向晃动
+    const spots = [-11.2, -8.4, 8.4, 11.2];
+    spots.forEach(function(x){
+      const y = Math.max(sanY(x), wuY(x)) + .22;
+      const m1 = beam3D([x, y, -2.9], [x, y + .8, 2.9], .22, MAT_SCISSOR);
+      const m2 = beam3D([x, y + .8, -2.9], [x, y, 2.9], .22, MAT_SCISSOR);
+      [m1,m2].forEach(function(m){
+        m.material = MAT_SCISSOR.clone();
+        m.material.transparent = true;
+        m.material.opacity = 0;
+        m.visible = false;
+        bridge.add(m);
+        braces.push(m);
+      });
+    });
+  }
+  function wuY(x){                       // 五节苗在 x 处的高程（横串跟着它走）
+    const ax = Math.abs(x);
+    if(ax >= X) return Y0;
+    if(ax >= 9.48) return Y0 + (X - ax) * (4.03 - Y0) / (X - 9.48);
+    if(ax >= 4.74) return 4.03 + (9.48 - ax) * (5.54 - 4.03) / (9.48 - 4.74);
+    return 5.54;
+  }
+  function buildTies(){
+    /* 六道可读的接合节点：斜苗交点（±7）、五节苗搭三节苗（±9.48）、平苗叠压（±4.74）。
+       每道 = 横串节点木夹住交叉点 + 每排一根竖向木销穿锁（无钉无铆的那根「销」）；
+       斜苗交点处再套一圈「别压半榫」套口（joints.crossing）：两根木各刻一半缺口、互锁咬合。 */
+    const sanSlope = (5.90 - Y0) / (X - 4.74);
+    const wuSlope2 = (5.54 - 4.03) / (9.48 - 4.74);
+    [-9.48, -7, -4.74, 4.74, 7, 9.48].forEach(function(x){
+      const upperIsSan = Math.abs(x) < 4.9;      // 平苗段三节苗在上，其余五节苗在上
+      const upperY = upperIsSan ? sanY(x) : wuY(x);
+      const topY = upperY + (upperIsSan ? .20 : .16);
+      const blockY = topY + .15;
+      bridge.add(block(x, blockY, 0, .5, .3, 5.9, MAT_HEAD.clone()));
+      const rows = upperIsSan ? ROWS.san : ROWS.wu;
+      const pegTop = blockY + .23, pegBottom = upperY - .35;
+      rows.forEach(function(z){
+        bridge.add(pegMesh(x, (pegTop + pegBottom) / 2, z, pegTop - pegBottom));
+      });
+      if(Math.abs(Math.abs(x) - 7) < .01 && window.BridgeJoints){
+        try{
+          const sgn = x < 0 ? 1 : -1;
+          const c = window.BridgeJoints.crossing(T, x, blockY, 0, {
+            angleA: sgn * Math.atan(sanSlope),
+            angleB: sgn * Math.atan(wuSlope2),
+            H: .42, notch: .56, tieLength: .2, tieDrop: 0
+          });
+          if(c) bridge.add(c);
+        }catch(e){}
+      }
+    });
+  }
+  function doBraces(){
+    state.busy = true;
+    if(state.mode !== 'detail') buildTies();
+    if(!braces.length) buildBraces();
+    braces.forEach(function(m, i){
+      setTimeout(function(){
+        m.visible = true;
+        tweenNum(m.material, 'opacity', 1, .25);
+        knock(190 + i*12, .12, .18);
+      }, i * 130);
+    });
+    const withFocus = state.mode === 'detail' && state.jointFocus;
+    if(withFocus){
+      setTimeout(function(){
+        const idx = state.step;
+        const note = (COPY && COPY.steps && COPY.steps[idx] && COPY.steps[idx].joint) ? '节点 · ' + COPY.steps[idx].joint : null;
+        focusJoint(new T.Vector3(8.4, 4.9, 0), note);
+      }, 650);
+    }
+    setTimeout(function(){
+      state.busy = false;
+      state.step++;
+      beginStep();
+    }, withFocus ? 4700 : 900);
+  }
+
+  function dustBurst(){
+    const n = 80;
+    const pos = new Float32Array(n * 3);
+    for(let i=0;i<n;i++){
+      const side = Math.random() < .5 ? -1 : 1;
+      pos[i*3] = side * 3.9 + (Math.random()-.5) * 1.8;
+      pos[i*3+1] = GROUND_Y + .15 + Math.random() * 1.2;
+      pos[i*3+2] = (Math.random()-.5) * 5.4;
+    }
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    const m = new T.PointsMaterial({color:0xb9a88d, size:.13, transparent:true, opacity:.5, depthWrite:false});
+    const pts = new T.Points(geo, m);
+    scene.add(pts);
+    tweenNum(m, 'opacity', 0, 1.4);
+    setTimeout(function(){ scene.remove(pts); }, 1500);
+  }
+
+  function doRemoveProps(){
+    state.busy = true;
+    creak();
+    dustBurst();
+    tweenNum(MAT_PROP, 'opacity', 0, .5);
+    props.children.forEach(function(p){
+      tweenVec(p, {x:p.position.x * 1.12, y:p.position.y - 1.4, z:p.position.z}, .7, easeInOut);
+      tweenNum(p.rotation, 'z', (Math.random()-.5) * .9, .8, easeInOut);
+    });
+    // 桥体微沉
+    setTimeout(function(){
+      tweenVec(bridge, {x:0, y:-0.07, z:0}, .28, easeOut, function(){
+        tweenVec(bridge, {x:0, y:0.015, z:0}, .22, easeOut, function(){
+          tweenVec(bridge, {x:0, y:0, z:0}, .18, easeInOut);
+        });
+      });
+      knock(70, .5, .35);
+      creak();
+    }, 380);
+    setTimeout(function(){
+      props.visible = false;
+      state.busy = false;
+      state.step++;
+      beginStep();
+    }, 1450);
+  }
+
+  /* ---------------------------------------------------------- 廊屋 */
+  function gblock(x, y, z, sx, sy, sz, material){
+    const m = new T.Mesh(new T.BoxGeometry(sx, sy, sz), material);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
+
+  function camberAt(x){        // 拱背纵坡（相对中央的下沉量）
+    const a = Math.min(Math.abs(x), FRAME_HALF) / FRAME_HALF;
+    return -CAMBER * a * a;
+  }
+  // 把已经建好的静止构件按世界 x 压到拱背上（只处理无旋转的箱体；
+  // 有旋转的整件按中心点抬降，差一个角度看不出来）
+  function bendToCamber(root){
+    root.updateMatrixWorld(true);
+    root.traverse(function(o){
+      if(!o.isMesh || !o.geometry || !o.geometry.attributes) return;
+      const g = o.geometry, p = g.attributes.position;
+      if(!p || g.userData.cambered) return;
+      g.userData.cambered = true;
+      if(Math.abs(o.rotation.x) + Math.abs(o.rotation.y) + Math.abs(o.rotation.z) > 1e-4){
+        o.position.y += camberAt(o.position.x);
+        return;
+      }
+      const ox = o.position.x;
+      for(let i=0;i<p.count;i++) p.setY(i, p.getY(i) + camberAt(p.getX(i) + ox));
+      p.needsUpdate = true;
+      g.computeVertexNormals();
+      g.computeBoundingSphere();
+    });
+  }
+  // 屋面横断面：脊→檐的凹曲线 + 檐口起翘 + 角部起翘（不含纵坡）
+  function roofY(x, t, length, ridgeY, eaveY){
+    const lift = .10 * Math.pow(Math.max(0, t-.82)/.18, 2);
+    const ex = Math.min(1, Math.abs(x) / (length/2));
+    const corner = .22 * Math.pow(Math.max(0, ex-.8)/.2, 2) * Math.pow(t, 2.2);
+    return ridgeY - (ridgeY-eaveY) * Math.pow(t, 1.45) + lift + corner;
+  }
+  function roofSurface(length, halfW, ridgeY, eaveY, material){
+    const rows = 14, cols = Math.max(8, Math.round(length / 2.4));
+    const pos = [], uv = [], idx = [];
+    for(let i=0;i<=cols;i++){
+      const x = -length/2 + length*i/cols;
+      for(let j=0;j<=rows;j++){
+        const t = j/rows;
+        const z = t*halfW;
+        const y = roofY(x, t, length, ridgeY, eaveY) + camberAt(x);
+        pos.push(x, y, z);
+        uv.push(i/cols, t);
+      }
+    }
+    for(let i=0;i<cols;i++){
+      for(let j=0;j<rows;j++){
+        const a = i*(rows+1)+j, b = a+1, c = a+rows+1, d = c+1;
+        idx.push(a, b, c, b, d, c);
+      }
+    }
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const m = new T.Mesh(geo, material);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
+
+  galleryGroups = null;
+  galleryMats = null;
+  const GALLERY_CATS = ['stairs','deck','support','columns','beams','rails','purlins','rafters','roof','pav','bridgehead','interior'];
+
+  function buildGallery(instant, detailed){
+    if(gallery) return;
+    gallery = new T.Group();
+    gallery.visible = true;
+    galleryGroups = {};
+    galleryMats = {};
+    const base = {
+      stairs: MAT_STONE.clone(),
+      deck: MAT_DECK.clone(),
+      support: MAT_GAL.clone(),
+      columns: MAT_GAL.clone(),
+      beams: MAT_GAL.clone(),
+      rails: MAT_GAL.clone(),
+      purlins: MAT_GAL.clone(),
+      rafters: MAT_GAL.clone(),
+      roof: MAT_ROOF.clone(),
+      pav: MAT_GAL.clone(),
+      bridgehead: MAT_GAL.clone(),
+      interior: MAT_GAL.clone()
+    };
+    base.roof.side = T.DoubleSide;
+    GALLERY_CATS.forEach(function(k){
+      const m = base[k];
+      m.transparent = !instant && !detailed;
+      m.opacity = instant ? 1 : (detailed ? 1 : 0);
+      galleryMats[k] = m;
+      const g = new T.Group();
+      g.visible = !!instant;
+      galleryGroups[k] = g;
+      gallery.add(g);
+    });
+    function add(cat, mesh){
+      mesh.visible = !!instant;
+      galleryGroups[cat].add(mesh);
+      return mesh;
+    }
+
+    // 两岸上桥石阶：东 16 级 / 西 26 级，沿 z 方向靠桥头侧上到桥面。
+    // 台地高度来自实测（东高西低），级数不同，踢面才都在 0.20 上下；
+    // 顶级与桥头平台（z=±2.65）同高同线，横一步就进廊屋。
+    [-1, 1].forEach(function(s){
+      const base = s > 0 ? TERRACE.east : TERRACE.west;
+      const top = deckY(FRAME_HALF);          // 桥面端部标高（拱背末端）
+      const N = s > 0 ? 16 : 26;
+      const riser = (top - base) / N;
+      const tread = 0.30;
+      const foot = 2.65 - N * tread;          // 顶级停在桥头平台边
+      for(let i=0;i<N;i++){
+        const y = base + (i + 1) * riser;
+        const h = Math.max(.14, y - (base - .45));
+        add('stairs', gblock(s * 26.5, (base - .45) + h/2, foot + i * tread,
+          1.4, h, tread + .03, galleryMats.stairs));
+      }
+    });
+
+    // 台地边缘的坡，交给环境层的地形与顶点色。
+
+    // 四角桥头屋：两端各两幢两层住家（precision-layout.md §4.3），
+    // 地面 5.35 齐桥面端部，石台基落到两岸台地；北岸两幢镜像。
+    if(window.BridgeHead){
+      try{
+        galleryDetailParts.bridgehead = [];
+        BridgeHead.corners.forEach(function(c){
+          const bh = window.BridgeHead.build(T, {corner: c.corner, baseDepth: c.baseDepth, hidden: !instant});
+          bh.group.position.set(c.x, BridgeHead.floorY, c.z);
+          if(c.flipZ) bh.group.scale.z = -1;
+          galleryGroups.bridgehead.add(bh.group);
+          (bh.parts || []).forEach(function(p){ galleryDetailParts.bridgehead.push(p); });
+        });
+      }catch(e){}
+    }
+    if(window.BridgeInterior){
+      try{
+        const it = window.BridgeInterior.build(T, {});
+        bendToCamber(it.group);            // 神龛、坐凳、匾额跟着拱背弯
+        galleryGroups.interior.add(it.group);
+        galleryDetailParts.interior = it.parts || [];
+        it.group.traverse(function(o){ if(o.isMesh) o.visible = !!instant; });
+      }catch(e){}
+    }
+
+    // 长料跟着拱背走：沿 x 分间，每段按 deckY 抬降并转出坡度
+    function addRun(cat, x0, x1, z, yOff, sy, sz, material){
+      const n = Math.max(1, Math.round((x1 - x0) / FRAME_BAY));
+      const step = (x1 - x0) / n;
+      for(let i=0;i<n;i++){
+        const xa = x0 + i * step, xb = xa + step, xm = (xa + xb) / 2;
+        const m = gblock(xm, deckY(xm) + yOff, z, step + .04, sy, sz, material);
+        m.rotation.z = Math.atan2(deckY(xb) - deckY(xa), step);
+        add(cat, m);
+      }
+    }
+
+    // 桥面：20 间，每间跟着拱背转一个角度
+    for(let i=0;i<20;i++){
+      const xa = -FRAME_HALF + i * FRAME_BAY, xb = xa + FRAME_BAY, xm = (xa + xb) / 2;
+      const panel = gblock(xm, deckY(xm), 0, FRAME_BAY - .08, .16, 5.3, galleryMats.deck);
+      panel.rotation.z = Math.atan2(deckY(xb) - deckY(xa), FRAME_BAY);
+      add('deck', panel);
+    }
+    [-2.6, 2.6].forEach(function(z){
+      addRun('deck', -FRAME_HALF, FRAME_HALF, z, -.24, .28, .22, galleryMats.deck);
+    });
+    [-1, 1].forEach(function(s){
+      // 两端平台平置在拱背末端标高（= 石阶顶级）
+      add('deck', gblock(s * (FRAME_HALF + 2.235/2), deckY(FRAME_HALF), 0, 2.235, .16, 5.3, galleryMats.deck));
+    });
+
+    // 桥板苗：桥面下的纵向次梁，把桥面荷载分给青蛙腿
+    [-1.35, 1.35, -2.2, 2.2].forEach(function(z){
+      addRun('support', -FRAME_HALF, FRAME_HALF, z, -.34, .18, .18, galleryMats.support);
+    });
+    // 青蛙腿：从五节苗节点斜撑到桥面梁，一节点两撇
+    [-9.48, -4.74, 4.74, 9.48].forEach(function(x){
+      [-1, 1].forEach(function(s){
+        const footY = wuY(x) + .20;
+        const topY = deckY(x) - .30;
+        [-1.35, 1.35].forEach(function(z){
+          add('support', beam3D([x, footY, z], [x + s * .62, topY, z], .17, galleryMats.support));
+        });
+      });
+    });
+
+    // 将军柱：拱上四组 + 两岸四组（岸上那几根落到台地/岸坡上）
+    [-23, -18, -11.5, -7.5, 7.5, 11.5, 18, 23].forEach(function(x){
+      add('support', gblock(x, deckY(x) - .16, 0, .18, .16, 5.3, galleryMats.support));
+      [-2.1, 2.1].forEach(function(z){
+        const top = deckY(x) - .24;
+        const bottom = (Math.abs(x) <= 14.2)
+          ? (Math.max(sanY(x), wuY(x)) + .20)
+          : (groundAt(x, z) - .25);
+        const h = Math.max(.12, top - bottom);
+        add('support', gblock(x, bottom + h/2, z, .16, h, .16, galleryMats.support));
+      });
+    });
+    [-14.22, 14.22].forEach(function(x){
+      add('support', gblock(x, deckY(x) - .16, 0, .18, .16, 5.3, galleryMats.support));
+      [-2.1, 2.1].forEach(function(z){
+        const top = deckY(x) - .24, bottom = Y0 + .85;   // 立在牛头上，锁住拱脚
+        add('support', gblock(x, (top + bottom)/2, z, .2, top - bottom, .2, galleryMats.support));
+      });
+    });
+    [-25.4, 25.4].forEach(function(x){
+      add('support', gblock(x, deckY(x) - .16, 0, .18, .16, 5.3, galleryMats.support));
+      [-2.1, 2.1].forEach(function(z){
+        const top = deckY(x) - .24;
+        const bottom = groundAt(x, z) - .25;
+        add('support', gblock(x, bottom + (top-bottom)/2, z, .18, top-bottom, .18, galleryMats.support));
+      });
+    });
+
+    // 84 根廊柱 + 每榀屋架：四柱九檩断面（precision-layout.md §2.4）
+    // 檐柱 ±2.45 顶 +2.55，金柱 ±1.35 顶 +3.75 直接顶檩；瓜柱、三架梁、脊瓜柱举出九檩
+    for(let i=0;i<=20;i++){
+      const x = -FRAME_HALF + i * FRAME_BAY;
+      [-2.45, -1.35, 1.35, 2.45].forEach(function(z){
+        add('stairs', gblock(x, deckY(x) + .08, z, .36, .12, .36, galleryMats.stairs));  // 柱础石
+      });
+      [-2.45, 2.45].forEach(function(z){
+        add('columns', gblock(x, deckY(x) + 1.275, z, .22, 2.55, .22, galleryMats.columns));
+      });
+      [-1.35, 1.35].forEach(function(z){
+        add('columns', gblock(x, deckY(x) + 1.875, z, .2, 3.75, .2, galleryMats.columns));
+      });
+      add('beams', gblock(x, deckY(x) + 2.47, 0, .18, .18, 4.9, galleryMats.beams));   // 檐柱间穿枋
+      [-2.025, 2.025].forEach(function(z){                                             // 瓜柱承 P2/P8
+        add('beams', gblock(x, deckY(x) + 2.925, z, .16, .75, .16, galleryMats.beams));
+      });
+      add('beams', gblock(x, deckY(x) + 3.36, 0, .18, .12, 4.05, galleryMats.beams));  // 三架梁
+      [-0.675, 0.675].forEach(function(z){                                             // 瓜柱承 P4/P6
+        add('beams', gblock(x, deckY(x) + 3.785, z, .15, .73, .15, galleryMats.beams));
+      });
+      add('beams', gblock(x, deckY(x) + 3.985, 0, .15, 1.13, .15, galleryMats.beams)); // 脊瓜柱承 P5
+      [-2.45, 2.45].forEach(function(z){                                               // 挑枋出 0.25 承檐檩
+        add('beams', gblock(x, deckY(x) + 2.62, z + (z > 0 ? .13 : -.13), .2, .14, .3, galleryMats.beams));
+      });
+    }
+    [-2.45, -1.35, 1.35, 2.45].forEach(function(z){
+      addRun('beams', -FRAME_HALF, FRAME_HALF, z, 2.62, .18, .16, galleryMats.beams);  // 檐枋随拱背
+    });
+
+    // 栏杆、风雨板、长凳
+    [.68, 1.23].forEach(function(yOff){
+      [-2.25, 2.25].forEach(function(z){
+        addRun('rails', -FRAME_HALF, FRAME_HALF, z, yOff, .09, .09, galleryMats.rails);
+      });
+    });
+    for(let i=0;i<20;i++){                          // 风雨板：檐柱外侧的下半墙
+      const xa = -FRAME_HALF + i * FRAME_BAY, xb = xa + FRAME_BAY, xm = (xa + xb) / 2;
+      [-1, 1].forEach(function(s){
+        const b = gblock(xm, deckY(xm) + .56, s * 2.58, FRAME_BAY - .05, .95, .05, galleryMats.rails);
+        b.rotation.z = Math.atan2(deckY(xb) - deckY(xa), FRAME_BAY);
+        add('rails', b);
+      });
+    }
+    [-1.75, 1.75].forEach(function(z){
+      addRun('rails', -5.5, 5.5, z, .40, .12, .42, galleryMats.rails);
+    });
+
+    // 九檩：随拱背通长，z = 0, ±0.675, ±1.35, ±2.025, ±2.70
+    [[0, 4.55], [.675, 4.15], [1.35, 3.75], [2.025, 3.30], [2.70, 2.80]].forEach(function(pz){
+      [-1, 1].forEach(function(s){
+        if(pz[0] === 0 && s < 0) return;
+        addRun('purlins', -FRAME_HALF, FRAME_HALF, pz[0] * s, pz[1], .16, .16, galleryMats.purlins);
+      });
+    });
+
+    // 椽（详细模式）：沿屋面坡下到檐口
+    if(detailed){
+      for(let i=0;i<=20;i++){
+        const x = -FRAME_HALF + i * FRAME_BAY;
+        [-1, 1].forEach(function(side){
+          const t = 1.6 / 3.15;
+          const ry = deckY(x) + 4.70 - 1.80 * Math.pow(t, 1.45) - .08;
+          const r = gblock(x, ry, side * 1.6, .09, .09, 3.5, galleryMats.rafters);
+          r.rotation.x = side * .55;
+          add('rafters', r);
+        });
+      }
+    }
+
+    // 瓦顶：全长 51.87，檐口 z ±3.15，脊 deck+4.70 / 檐 deck+2.90（坡约 30°）
+    const roofLen = 51.87, roofHalf = 3.15;
+    const RIDGE_Y = 11.02, EAVE_Y = 9.22;
+    const mainA = roofSurface(roofLen, roofHalf, RIDGE_Y, EAVE_Y, galleryMats.roof); add('roof', mainA);
+    const mainB = roofSurface(roofLen, roofHalf, RIDGE_Y, EAVE_Y, galleryMats.roof); mainB.scale.z = -1; add('roof', mainB);
+    if(window.BridgeRoofDetail){
+      try{
+        const rd = window.BridgeRoofDetail.build(T, {
+          length: roofLen, halfWidth: roofHalf, ridgeY: RIDGE_Y, eaveY: EAVE_Y,
+          courseCount: 12, tileMaterial: galleryMats.roof, frameMaterial: galleryMats.purlins,
+          // 瓦垄、脊、封檐都按同一条屋面公式，再统一压上纵坡
+          profile: function(x, t){ return roofY(x, t, roofLen, RIDGE_Y, EAVE_Y); }
+        });
+        rd.parts.forEach(function(m){
+          const g = m.geometry, p = g && g.attributes && g.attributes.position;
+          if(p){
+            for(let i=0;i<p.count;i++) p.setY(i, p.getY(i) + camberAt(p.getX(i)));
+            p.needsUpdate = true;
+            g.computeVertexNormals();
+            g.computeBoundingSphere();
+          }
+          add('roof', m);
+        });
+      }catch(e){}
+    }
+
+    // 山墙封三角（屋面两端收口）
+    function gableTri(x, yTop, yBot, zW, material){
+      const geo = new T.BufferGeometry();
+      geo.setAttribute('position', new T.Float32BufferAttribute([
+        x, yTop, 0,  x, yBot, zW,  x, yBot, -zW
+      ], 3));
+      geo.computeVertexNormals();
+      const m = new T.Mesh(geo, material);
+      m.castShadow = true;
+      return m;
+    }
+    [1, -1].forEach(function(s){ add('roof', gableTri(s * (roofLen/2 - .02), RIDGE_Y + camberAt(roofLen/2), EAVE_Y + camberAt(roofLen/2), roofHalf - .03, galleryMats.roof)); });
+
+    // 中央重檐楼阁：面阔 9.48（±4.74），腰檐浮出主屋面，上檐脊 12.00（precision-layout §3.4）
+    [-3.9, 3.9].forEach(function(x){
+      [-1.7, 1.7].forEach(function(z){ add('pav', gblock(x, 9.45, z, .2, 2.0, .2, galleryMats.pav)); });
+    });
+    add('pav', gblock(0, 10.02, 0, 8.2, .26, 4.0, galleryMats.pav));                     // 下层额枋 / 平座梁
+    const w1 = roofSurface(10.4, 2.75, 11.32, 9.92, galleryMats.roof); add('pav', w1);   // 腰檐
+    const w1b = roofSurface(10.4, 2.75, 11.32, 9.92, galleryMats.roof); w1b.scale.z = -1; add('pav', w1b);
+    add('pav', gableTri(5.15, 11.32, 9.96, 2.72, galleryMats.roof));
+    add('pav', gableTri(-5.15, 11.32, 9.96, 2.72, galleryMats.roof));
+    add('pav', gblock(0, 11.32, 0, 10.4, .16, .3, galleryMats.roof));                    // 腰脊
+    [[-2.3, 0], [2.3, 0], [0, -1.3], [0, 1.3]].forEach(function(p){                      // 平座栏杆
+      add('pav', gblock(p[0], 11.5, p[1], .08, .42, .08, galleryMats.pav));
+    });
+    add('pav', gblock(0, 11.70, -1.3, 4.7, .07, .07, galleryMats.pav));
+    add('pav', gblock(0, 11.70, 1.3, 4.7, .07, .07, galleryMats.pav));
+    add('pav', gblock(-2.3, 11.70, 0, .07, .07, 2.7, galleryMats.pav));
+    add('pav', gblock(2.3, 11.70, 0, .07, .07, 2.7, galleryMats.pav));
+    [-2.2, 2.2].forEach(function(x){
+      [-1.05, 1.05].forEach(function(z){ add('pav', gblock(x, 11.35, z, .18, .62, .18, galleryMats.pav)); });
+    });
+    const p1 = roofSurface(6.4, 1.95, 12.0, 11.5, galleryMats.roof); add('pav', p1);     // 上檐
+    const p1b = roofSurface(6.4, 1.95, 12.0, 11.5, galleryMats.roof); p1b.scale.z = -1; add('pav', p1b);
+    add('pav', gableTri(3.15, 12.0, 11.52, 1.92, galleryMats.roof));
+    add('pav', gableTri(-3.15, 12.0, 11.52, 1.92, galleryMats.roof));
+    add('pav', gblock(0, 12.0, 0, 6.4, .14, .2, galleryMats.roof));                      // 上脊
+    add('pav', gblock(0, 12.13, 0, 1.1, .30, .30, MAT_HEAD));                            // 脊饰
+
+    bridge.add(gallery);
+  }
+
+  function setGalleryOpaque(){
+    GALLERY_CATS.forEach(function(k){
+      const m = galleryMats[k];
+      if(m){ m.transparent = false; m.opacity = 1; m.needsUpdate = true; }
+    });
+  }
+
+  function revealGallery(){
+    GALLERY_CATS.forEach(function(k){
+      if(!galleryGroups[k]) return;
+      galleryGroups[k].visible = true;
+      galleryGroups[k].traverse(function(o){ o.visible = true; });
+    });
+    tweenNum(galleryMats.stairs, 'opacity', 1, .45);
+    tweenNum(galleryMats.deck, 'opacity', 1, .45);
+    tweenNum(galleryMats.support, 'opacity', 1, .5);
+    tweenNum(galleryMats.columns, 'opacity', 1, .5);
+    tweenNum(galleryMats.beams, 'opacity', 1, .5);
+    tweenNum(galleryMats.rails, 'opacity', 1, .5);
+    tweenNum(galleryMats.purlins, 'opacity', 1, .5);
+    tweenNum(galleryMats.rafters, 'opacity', 1, .5);
+    const roof = galleryGroups.roof;
+    roof.position.y = 1.2;
+    tweenNum(galleryMats.roof, 'opacity', 1, .6);
+    tweenVec(roof, {x:0, y:0, z:0}, .9, easeOut);
+    setTimeout(function(){ tweenNum(galleryMats.pav, 'opacity', 1, .5); }, 850);
+    knock(110, .3, .4);
+    setTimeout(setGalleryOpaque, 1900);
+  }
+
+  function revealCat(cat, delay, done){
+    const g = galleryGroups && galleryGroups[cat];
+    if(!g){ if(done) done(); return; }
+    g.visible = true;
+    const kids = (galleryDetailParts[cat] && galleryDetailParts[cat].length) ? galleryDetailParts[cat].slice() : g.children.slice();
+    kids.forEach(function(o, i){
+      setTimeout(function(){
+        o.visible = true;
+        if(o.isMesh){
+          const sx = o.scale.x, sy = o.scale.y, sz = o.scale.z;
+          o.scale.set(sx * .7, sy * .7, sz * .7);
+          tweenNum(o.scale, 'x', sx, .18, easeOut);
+          tweenNum(o.scale, 'y', sy, .18, easeOut);
+          tweenNum(o.scale, 'z', sz, .18, easeOut);
+        }
+        o.traverse(function(c){ c.visible = true; });
+        knock(140 + (i % 5) * 12, .07, .09);
+      }, i * delay);
+    });
+    const total = kids.length * delay + 260;
+    setTimeout(function(){ if(done) done(); }, total);
+  }
+
+  function doGallery(){
+    state.busy = true;
+    hideCTA();
+    setForce(false);
+    if(loadBlock){
+      tweenVec(loadBlock, {x:0, y:12, z:0}, 1.0, function(t){ return t*t; }, function(){ loadBlock.visible = false; });
+    }
+    if(!gallery) buildGallery(false, false);
+    revealGallery();
+    setTimeout(function(){ state.busy = false; state.step++; finish(); }, 3000);
+  }
+
+  function doTies(){
+    state.busy = true;
+    hideCTA();
+    buildTies();
+    if(AUDIO) AUDIO.sfx('knock', {gain:.4});
+    const withFocus = state.mode === 'detail' && state.jointFocus;
+    if(withFocus){
+      setTimeout(function(){
+        const idx = state.step;
+        const note = (COPY && COPY.steps && COPY.steps[idx] && COPY.steps[idx].joint) ? '节点 · ' + COPY.steps[idx].joint : null;
+        focusJoint(new T.Vector3(7, 4.9, 0), note);
+      }, 650);
+    }
+    setTimeout(function(){ state.busy = false; state.step++; beginStep(); }, withFocus ? 2400 : 900);
+  }
+
+  function doCat(cat, opts, done){
+    state.busy = true;
+    hideCTA();
+    if(AUDIO) AUDIO.sfx('knock', {gain:.35});
+    if(!gallery) buildGallery(false, true);
+    revealCat(cat, (opts && opts.delay) || 55, function(){
+      state.busy = false;
+      state.step++;
+      beginStep();
+      if(done) done();
+    });
+  }
+
+  function doDeck(){
+    perfDone = false; perfFrames = 0; perfTime = 0;
+    state.busy = true;
+    hideCTA();
+    showToast('匠人班组进场，准备廊屋…');
+    setTimeout(function(){
+      if(!gallery) buildGallery(false, true);
+      revealCat('stairs', 40, function(){
+        revealCat('deck', 45, function(){ state.busy = false; state.step++; beginStep(); });
+      });
+    }, 80);
+  }
+  function doPosts(){ doCat('support', {delay:60}); }
+  function doColumns(){ doCat('columns', {delay:35}); }
+  function doBeams(){
+    state.busy = true;
+    hideCTA();
+    if(!gallery) buildGallery(false, true);
+    revealCat('beams', 40, function(){
+      revealCat('rails', 35, function(){ state.busy = false; state.step++; beginStep(); });
+    });
+  }
+  function doPurlins(){ doCat('purlins', {delay:30}); }
+  function doRafters(){ doCat('rafters', {delay:22}); }
+  function doRoof(){ doCat('roof', {delay:90}); }
+  function doPavilion(){ doCat('pav', {delay:55}); }
+  function doFinishAll(){
+    perfDone = false; perfFrames = 0; perfTime = 0;
+    state.busy = true;
+    hideCTA();
+    if(!gallery) buildGallery(false, true);
+    revealCat('bridgehead', 12, function(){
+      revealCat('interior', 20, function(){
+        setGalleryOpaque();
+        showToast('桥头屋、神龛、匾额都就位了。人可以从两岸走上来。');
+        setTimeout(function(){ state.busy = false; state.step++; finish(); }, 600);
+      });
+    });
+  }
+
+  function doLoad(){
+    state.busy = true;
+    const m = block(0, 6.9, 0, 2.6, 1.0, 3.6, mat(0x4a443c, {roughness:.95}));
+    m.material.emissive = new T.Color(0x1a0c08);
+    m.position.y = 10.0;
+    bridge.add(m);
+    loadBlock = m;
+    let landed = false;
+    function land(){
+      if(landed) return;
+      landed = true;
+      m.position.set(0, 6.90, 0);
+      knock(58, .55, .55);
+      creak();
+      // 受压下沉
+      tweenVec(bridge, {x:0, y:-0.045, z:0}, .25, easeOut, function(){
+        tweenVec(bridge, {x:0, y:-0.02, z:0}, .35, easeOut);
+      });
+      enableForce();
+      setTimeout(function(){
+        state.busy = false;
+        state.step++;
+        beginStep();
+      }, 1700);
+    }
+    tweenVec(m, {x:0, y:6.90, z:0}, .62, function(t){ return t*t; }, land);
+    setTimeout(land, 1100);   // RAF 被节流时的兜底
+  }
+
+  /* ---------------------------------------------------------- 力流 */
+  /* 闭式拱轴力示意：均布荷载下的三铰拱，压力往两岸走 */
+  let forceLevel = 1;
+
+  function archForces(load){
+    const L = 2 * X;
+    const rise = 6.0 - Y0;
+    const w = load;
+    const H = w * L * L / (8 * rise);
+    function member(a, b){
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const len = Math.hypot(dx, dy);
+      const cos = Math.abs(dx) / len, sin = Math.abs(dy) / len;
+      const xm = (a[0] + b[0]) / 2;
+      const V = w * (L/2 - Math.abs(xm));
+      return H * cos + V * sin;
+    }
+    const san = [0,1,2].map(function(i){ return member(SAN[i], SAN[i+1]); });
+    const wu = [0,1,2,3,4].map(function(i){ return member(WU[i], WU[i+1]); });
+    return {san:san, wu:wu};
+  }
+
+  function clearForceColor(){
+    bridge.traverse(function(o){
+      if(o.isMesh && o.userData && o.userData.system){
+        o.material.emissive.setHex(0x000000);
+        o.material.emissiveIntensity = 0;
+      }
+    });
+  }
+
+  function colorByForce(){
+    const f = archForces(forceLevel);
+    const all = f.san.concat(f.wu);
+    const max = Math.max.apply(null, all) || 1;
+    bridge.traverse(function(o){
+      if(!o.isMesh || !o.userData || !o.userData.system || o.userData.seg === undefined) return;
+      const arr = o.userData.system === 'san' ? f.san : f.wu;
+      const v = arr[o.userData.seg] || 0;
+      const r = Math.max(0, Math.min(1, v / max));
+      o.material.emissive.setHex(0xd75b3c);
+      o.material.emissiveIntensity = .05 + r * .4;
+    });
+  }
+
+  function setForce(on){
+    state.force = !!on;
+    const btn = document.getElementById('forceBtn');
+    if(btn){
+      btn.classList.toggle('on', state.force);
+      btn.setAttribute('aria-pressed', state.force ? 'true' : 'false');
+    }
+    if(state.force){
+      if(!forceGroup) buildForceParticles();
+      if(forceGroup) forceGroup.visible = true;
+      colorByForce();
+    }else{
+      if(forceGroup) forceGroup.visible = false;
+      clearForceColor();
+    }
+  }
+
+  let forceDots = null, forceDotData = null;
+  function dotTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(16,16,0,16,16,16);
+    grd.addColorStop(0,'rgba(255,255,255,1)');
+    grd.addColorStop(.5,'rgba(255,255,255,.7)');
+    grd.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle = grd; g.fillRect(0,0,32,32);
+    const t = new T.CanvasTexture(c);
+    t.encoding = T.sRGBEncoding;
+    return t;
+  }
+
+  function buildForceParticles(){
+    if(forceGroup) return;
+    forceGroup = new T.Group();
+    scene.add(forceGroup);
+
+    const list = [];
+    placed.forEach(function(p){
+      if(p.block) return;
+      for(let k=0;k<2;k++){
+        list.push({a:p.a, b:p.b, z:p.z, dir:p.dir || 1, phase:k*.5 + Math.random()*.2});
+      }
+    });
+    forceDotData = list;
+    const pos = new Float32Array(list.length * 3);
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    const mat = new T.PointsMaterial({
+      color:0xff8a63, size:.24, sizeAttenuation:true, map:dotTexture(),
+      transparent:true, opacity:.9, blending:T.AdditiveBlending, depthWrite:false
+    });
+    forceDots = new T.Points(geo, mat);
+    forceGroup.add(forceDots);
+
+    const coneMat = new T.MeshBasicMaterial({color:0xff8a63, transparent:true, opacity:.9, blending:T.AdditiveBlending, depthWrite:false});
+    [-1,1].forEach(function(side){
+      const cone = new T.Mesh(new T.ConeGeometry(.22,.7,8), coneMat);
+      cone.position.set(side*12.9, Y0, 0);
+      cone.rotation.z = side > 0 ? Math.PI/2 : -Math.PI/2;
+      forceGroup.add(cone);
+    });
+  }
+
+  function enableForce(){
+    setForce(true);
+  }
+
+  function updateForce(t){
+    if(!forceDots || !forceGroup || !forceGroup.visible) return;
+    const attr = forceDots.geometry.attributes.position;
+    const arr = attr.array;
+    for(let i=0;i<forceDotData.length;i++){
+      const d = forceDotData[i];
+      const p = (t * .22 + d.phase) % 1;
+      const q = d.dir > 0 ? p : 1 - p;
+      arr[i*3] = d.a[0] + (d.b[0]-d.a[0])*q;
+      arr[i*3+1] = d.a[1] + (d.b[1]-d.a[1])*q;
+      arr[i*3+2] = d.z;
+    }
+    attr.needsUpdate = true;
+  }
+
+  /* ---------------------------------------------------------- HUD */
+  const ticksEl = document.getElementById('ticks');
+  const tipEl = document.getElementById('tip');
+  const knowEl = document.getElementById('know');
+  const autoBtn = document.getElementById('autoBtn');
+  const VOICE_STEPS = { quick:[2,5,10,11,12,13], detail:[0,1,3,7,10,11,13,15,19,21] };
+  const spokenSteps = {};
+  const tipV = new T.Vector3();
+  let tipTick = 0, tipLastX = -1, tipLastY = -1, tipLastText = '';
+  const viewsEl = document.getElementById('views');
+  const sideBtn = document.getElementById('sideBtn');
+  let viewMode = 'all', sideOn = false;
+  function renderTicks(){
+    ticksEl.innerHTML = '';
+    for(let i=0;i<steps.length;i++){
+      const el = document.createElement('i');
+      ticksEl.appendChild(el);
+    }
+  }
+  function renderHUD(){
+    const s = currentStep();
+    const n = Math.min(state.step + 1, steps.length);
+    document.getElementById('stepNum').textContent = String(n).padStart(2,'0') + ' / ' + String(steps.length).padStart(2,'0');
+    if(!s){
+      document.getElementById('stepName').textContent = '合龙';
+      document.getElementById('hint').textContent = '三节苗管跨度，五节苗别住它，剪刀苗管前后。';
+      if(knowEl){ knowEl.textContent = ''; knowEl.classList.remove('show'); }
+      Array.prototype.forEach.call(ticksEl.children, function(el){ el.className = 'done'; });
+      return;
+    }
+    const c = COPY && COPY.steps[state.step];
+    document.getElementById('stepName').textContent = s.label;
+    document.getElementById('hint').textContent = (c && c.hint) || s.hint;
+    if(knowEl){
+      knowEl.textContent = c ? ('为什么 · ' + c.knowledge + (state.mode === 'detail' && c.joint ? ' ｜ 节点 · ' + c.joint : '')) : '';
+      knowEl.classList.toggle('show', !!c);
+    }
+    Array.prototype.forEach.call(ticksEl.children, function(el, i){
+      el.className = i < state.step ? 'done' : (i === state.step ? 'now' : '');
+    });
+  }
+
+  function applyView(mode){
+    viewMode = mode;
+    if(gallery) gallery.visible = (mode === 'all');
+    bridge.traverse(function(o){
+      if(o.isMesh && o.userData && o.userData.system){
+        o.visible = (mode === 'all') || (mode === 'arch') || (o.userData.system === mode);
+      }
+    });
+    Array.prototype.forEach.call(viewsEl.querySelectorAll('button[data-view]'), function(b){
+      const on = b.getAttribute('data-view') === mode;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  function toggleSide(){
+    sideOn = !sideOn;
+    if(sideOn){
+      camera.position.set(0, 8, 72);
+      controls.target.set(0, 4.6, 0);
+    }else{
+      camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
+      controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    }
+    controls.update();
+    sideBtn.textContent = sideOn ? '复位' : '侧视';
+  }
+
+  Array.prototype.forEach.call(viewsEl.querySelectorAll('button[data-view]'), function(b){
+    b.addEventListener('click', function(){
+      const mode = b.getAttribute('data-view');
+      applyView(mode);
+      if(COPY && COPY.viewNotes[mode]) showToast(COPY.viewNotes[mode]);
+      if(AUDIO) AUDIO.sfx('whoosh', {gain:.3});
+    });
+  });
+  sideBtn.addEventListener('click', function(){
+    toggleSide();
+    if(COPY && COPY.viewNotes.side) showToast(COPY.viewNotes.side);
+    if(AUDIO) AUDIO.sfx('whoosh', {gain:.3});
+  });
+
+  const forceBtn = document.getElementById('forceBtn');
+  const breakBtn = document.getElementById('breakBtn');
+  let brokenMeshes = [], isBroken = false, toastTimer = null;
+
+  function showToast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3600);
+  }
+
+  const HOME_MIN_DISTANCE = 8;
+  let focusTimer = null, focusHome = null;
+  /* 特写期间点一下画布 = 不等了，马上回位交还控制 */
+  function cancelJointFocus(){
+    if(!cameraFocus) return;
+    clearTimeout(focusTimer);
+    focusTimer = null;
+    for(let i = tweens.length - 1; i >= 0; i--){
+      const w = tweens[i];
+      if(w.obj === camera.position || w.obj === controls.target) tweens.splice(i, 1);
+    }
+    const home = focusHome;
+    cameraFocus = false;
+    if(home){
+      tweenVec(camera.position, {x:home.pos.x, y:home.pos.y, z:home.pos.z}, .25, easeOut);
+      tweenNum(controls.target, 'x', home.target.x, .25, easeOut);
+      tweenNum(controls.target, 'y', home.target.y, .25, easeOut);
+      tweenNum(controls.target, 'z', home.target.z, .25, easeOut);
+      focusHome = null;
+    }
+    controls.enabled = true;
+    controls.minDistance = HOME_MIN_DISTANCE;
+    controls.update();
+  }
+  function focusJoint(point, note){
+    if(!point) return;
+    if(!focusHome) focusHome = {pos: camera.position.clone(), target: controls.target.clone()};
+    const home = focusHome;
+    /* 机位在构件排外侧（z +5.4）、节点上方 1.9：以前 (1.8,1.0,2.6) 会怼进梁堆里 */
+    const toPos = point.clone().add(new T.Vector3(1.2, 1.9, 5.4));
+    cameraFocus = true;
+    controls.enabled = false;
+    controls.minDistance = .8;
+    clearTimeout(focusTimer);
+    tweenVec(camera.position, {x:toPos.x, y:toPos.y, z:toPos.z}, .9, easeInOut);
+    tweenNum(controls.target, 'x', point.x, .9, easeInOut);
+    tweenNum(controls.target, 'y', point.y, .9, easeInOut);
+    tweenNum(controls.target, 'z', point.z, .9, easeInOut);
+    focusTimer = setTimeout(function(){
+      focusTimer = null;
+      tweenVec(camera.position, {x:home.pos.x, y:home.pos.y, z:home.pos.z}, .9, easeInOut, function(){
+        cameraFocus = false;
+        focusHome = null;
+        controls.enabled = true;
+        controls.minDistance = HOME_MIN_DISTANCE;
+        controls.update();
+      });
+      tweenNum(controls.target, 'x', home.target.x, .7, easeInOut);
+      tweenNum(controls.target, 'y', home.target.y, .7, easeInOut);
+      tweenNum(controls.target, 'z', home.target.z, .9, easeInOut);
+    }, 2600);
+    if(note) showToast(note);
+  }
+
+  function breakOne(){
+    isBroken = true;
+    if(gallery) applyView('arch');
+    brokenMeshes = [];
+    bridge.traverse(function(o){
+      if(o.isMesh && o.userData && o.userData.system === 'wu' && o.userData.seg === 1){
+        o.visible = false;
+        brokenMeshes.push(o);
+      }
+    });
+    tweenVec(bridge, {x:0, y:-0.38, z:0}, .8, easeOut);
+    tweenNum(bridge.rotation, 'z', .018, .9);
+    breakBtn.textContent = '复位';
+    showToast('五节苗断了一根。五节苗不再连续，三节苗成了机构。');
+    if(AUDIO){ AUDIO.sfx('error', {gain:.7}); if(COPY) AUDIO.say(COPY.viewNotes.break); }
+    if(state.force) setForce(false);
+  }
+
+  function restoreBreak(){
+    isBroken = false;
+    brokenMeshes.forEach(function(o){ o.visible = true; });
+    brokenMeshes = [];
+    tweenVec(bridge, {x:0, y:0, z:0}, .5, easeOut);
+    tweenNum(bridge.rotation, 'z', 0, .5);
+    breakBtn.textContent = '抽一根';
+    applyView(viewMode);
+    showToast('复位。');
+    if(AUDIO) AUDIO.sfx('chime', {gain:.6});
+  }
+
+  forceBtn.addEventListener('click', function(){
+    setForce(!state.force);
+    if(COPY && COPY.viewNotes.force) showToast(COPY.viewNotes.force);
+    if(AUDIO) AUDIO.sfx(state.force ? 'chime' : 'whoosh', {gain:.3});
+  });
+  breakBtn.addEventListener('click', function(){ isBroken ? restoreBreak() : breakOne(); });
+
+  function finish(){
+    updateShadows();
+    renderHUD();
+    if(AUDIO){
+      AUDIO.sfx('success', {gain:.6});
+      if(COPY) AUDIO.say(COPY.end);
+    }
+    document.getElementById('end').classList.remove('hide');
+    viewsEl.classList.add('show');
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = .32;
+  }
+
+  /* ---------------------------------------------------------- 开始 / 重置 */
+  function start(mode){
+    if(state.started) return;
+    buildSteps(mode || 'quick');
+    state.started = true;
+    initAudio();
+    if(AUDIO){
+      AUDIO.unlock();
+      AUDIO.setMusic(true);
+      AUDIO.setVoice(state.voice);
+      AUDIO.setSfx(true);
+      AUDIO.musicStart();
+      if(COPY) setTimeout(function(){ AUDIO.say(COPY.intro); }, 420);
+    }
+    document.body.classList.add('playing');
+    document.getElementById('intro').classList.add('hide');
+    controls.autoRotate = false;
+    renderer.domElement.style.cursor = 'grab';
+    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
+    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    controls.update();
+    if(previewGroup){
+      const pg = previewGroup;
+      previewGroup = null;
+      pg.traverse(function(o){
+        if(o.material && o.material.transparent) tweenNum(o.material, 'opacity', 0, .55);
+      });
+      setTimeout(function(){ scene.remove(pg); }, 720);
+    }
+    beginStep();
+  }
+  document.getElementById('startBtn').addEventListener('click', function(){ start('quick'); });
+  document.getElementById('startDetailBtn').addEventListener('click', function(){ start('detail'); });
+  autoBtn.addEventListener('click', function(){
+    if(!state.active || state.busy || state.active.dragging) return;
+    state.active.mesh.position.copy(state.active.targetPos);
+    state.active.mesh.quaternion.copy(state.active.targetQuat);
+    placeActive();
+  });
+  document.getElementById('againBtn').addEventListener('click', function(){ location.reload(); });
+  document.getElementById('exploreBtn').addEventListener('click', function(){
+    document.getElementById('end').classList.add('hide');
+    document.body.classList.add('playing');
+    viewsEl.classList.add('show');
+    controls.autoRotate = false;
+    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
+    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    controls.update();
+  });
+  window.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' || !state.active || state.busy || state.active.dragging) return;
+    state.active.mesh.position.copy(state.active.targetPos);
+    state.active.mesh.quaternion.copy(state.active.targetQuat);
+    placeActive();
+  });
+  document.getElementById('soundBtn').addEventListener('click', function(){
+    if(AUDIO){
+      AUDIO.unlock();
+      const cur = AUDIO.state();
+      AUDIO.setMuted(!cur.muted);
+      state.sound = cur.muted;
+      this.textContent = state.sound ? '声音 · 开' : '声音 · 关';
+      return;
+    }
+    state.sound = !state.sound;
+    this.textContent = state.sound ? '声音 · 开' : '声音 · 关';
+    if(state.sound){ initAudio(); knock(180, .1, .2); }
+  });
+  document.getElementById('voiceBtn').addEventListener('click', function(){
+    state.voice = !state.voice;
+    if(AUDIO){ AUDIO.unlock(); AUDIO.setVoice(state.voice); }
+    this.textContent = state.voice ? '语音 · 开' : '语音 · 关';
+    if(state.voice && AUDIO) AUDIO.say('语音已打开。');
+  });
+  const galleryBtn = document.getElementById('galleryBtn');
+  if(galleryBtn && window.JointGallery){
+    galleryBtn.addEventListener('click', function(){ window.JointGallery.open(); });
+  }
+  const endGalleryBtn = document.getElementById('endGalleryBtn');
+  if(endGalleryBtn && window.JointGallery){
+    endGalleryBtn.addEventListener('click', function(){
+      document.getElementById('end').classList.add('hide');
+      window.JointGallery.open();
+    });
+  }
+  const jointBtn = document.getElementById('jointBtn');
+  if(jointBtn) jointBtn.addEventListener('click', function(){
+    state.jointFocus = !state.jointFocus;
+    this.textContent = state.jointFocus ? '节点 · 开' : '节点 · 关';
+  });
+
+  /* 知识小测验 */
+  const quizEl = document.getElementById('quiz');
+  const quizBtn = document.getElementById('quizBtn');
+  let quizIndex = 0, quizScore = 0, quizLocked = false;
+  if(!COPY && quizBtn) quizBtn.style.display = 'none';
+
+  function renderQuiz(){
+    const q = COPY.quiz[quizIndex];
+    document.getElementById('quizKicker').textContent = '知识小测 · ' + (quizIndex + 1) + ' / ' + COPY.quiz.length;
+    document.getElementById('quizQ').textContent = q.q;
+    const box = document.getElementById('quizOpts');
+    box.innerHTML = '';
+    q.options.forEach(function(text, i){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = text;
+      b.addEventListener('click', function(){ answerQuiz(i, b); });
+      box.appendChild(b);
+    });
+    document.getElementById('quizFb').textContent = '';
+    document.getElementById('quizNext').style.display = '';
+    document.getElementById('quizNext').textContent = quizIndex < COPY.quiz.length - 1 ? '下一题' : '看结果';
+    quizLocked = false;
+  }
+
+  function answerQuiz(i, btn){
+    if(quizLocked) return;
+    const q = COPY.quiz[quizIndex];
+    if(i === q.answer){
+      quizScore++;
+      btn.classList.add('ok');
+      quizLocked = true;
+      document.getElementById('quizFb').textContent = q.explain;
+      if(AUDIO) AUDIO.sfx('success', {gain:.4});
+    }else{
+      btn.classList.add('no');
+      document.getElementById('quizFb').textContent = '再想想。' + q.explain;
+    }
+  }
+
+  function nextQuiz(){
+    if(!quizLocked) return;
+    if(quizIndex < COPY.quiz.length - 1){
+      quizIndex++;
+      renderQuiz();
+      return;
+    }
+    document.getElementById('quizKicker').textContent = '答对 ' + quizScore + ' / ' + COPY.quiz.length;
+    document.getElementById('quizQ').textContent = quizScore === COPY.quiz.length ? '全对。你已经会讲这座桥了。' : '再编一次，或者回到桥上再看一遍。';
+    document.getElementById('quizOpts').innerHTML = '';
+    document.getElementById('quizFb').textContent = '';
+    document.getElementById('quizNext').style.display = 'none';
+    if(AUDIO) AUDIO.sfx(quizScore === COPY.quiz.length ? 'success' : 'chime', {gain:.5});
+  }
+
+  function openQuiz(){
+    if(!COPY || !COPY.quiz) return;
+    quizIndex = 0;
+    quizScore = 0;
+    quizEl.classList.remove('hide');
+    renderQuiz();
+    if(AUDIO){ AUDIO.unlock(); AUDIO.sfx('chime', {gain:.5}); }
+  }
+
+  if(quizBtn) quizBtn.addEventListener('click', openQuiz);
+  document.getElementById('quizNext').addEventListener('click', nextQuiz);
+  document.getElementById('quizClose').addEventListener('click', function(){ quizEl.classList.add('hide'); });
+  window.addEventListener('keydown', function(e){
+    if(quizEl.classList.contains('hide')) return;
+    if(e.key >= '1' && e.key <= '4'){
+      const opts = document.getElementById('quizOpts').children;
+      const i = parseInt(e.key, 10) - 1;
+      if(opts[i]) opts[i].click();
+    }
+    if(e.key === 'Enter') document.getElementById('quizNext').click();
+  });
+  renderer.domElement.addEventListener('pointerdown', function(){
+    controls.autoRotate = false;
+  });
+
+  const QS = new URLSearchParams(location.search);
+  buildSteps('quick');
+  if(QS.has('auto')){
+    setTimeout(function(){ start('quick'); }, 200);
+  }else{
+    renderHUD();
+  }
+
+  /* 调试：直接看合龙后的灰盒 */
+  function makeArch(group, opt){
+    opt = opt || {};
+    const seenNodes = {};
+    const op = opt.opacity === undefined ? 1 : opt.opacity;
+    const M = function(base){
+      const m = base.clone();
+      m.color.multiplyScalar(.9 + Math.random()*.18);
+      if(op < 1){ m.transparent = true; m.opacity = op; }
+      return m;
+    };
+    [-X, X].forEach(function(x){
+      const h = block(x, Y0, 0, 2.0, 1.7, 6.8, M(MAT_HEAD));
+      addHeadDetails(h);
+      group.add(h);
+    });
+    ['san','wu'].forEach(function(system){
+      const n = segmentCount(system);
+      const sec = system === 'san' ? SEC_SAN : SEC_WU;
+      const rows = ROWS[system];
+      const midRow = (rows.length - 1) >> 1;
+      for(let i=0;i<n;i++){
+        for(let r=0;r<rows.length;r++){
+          const a = nodeAt(system, i), b = nodeAt(system, i+1);
+          const z = rows[r];
+          const m = beam2D(a, b, z, sec.h, sec.w, M(system==='san'?MAT_SAN:MAT_WU));
+          m.userData = {a:a,b:b,z:z,system:system,seg:i};
+          group.add(m);
+          if(r===0){
+            group.add(joint(a[0], a[1], z, system));
+            group.add(joint(b[0], b[1], z, system));
+          }
+          if(r === midRow && window.BridgeJoints && state.mode === 'detail'){
+            try{
+              const p = (a[1] >= b[1]) ? a : b;
+              const key = p[0].toFixed(2) + ',' + p[1].toFixed(2) + ',' + z.toFixed(2);
+              if(!seenNodes[key]){
+                seenNodes[key] = true;
+                const ng = window.BridgeJoints.node(T, {x:p[0], y:p[1], z:z, members:[{a:a, b:b, system:system}], system:system}, {});
+                if(ng){
+                  ng.traverse(function(o){ o.userData.system = system; });
+                  group.add(ng);
+                }
+              }
+            }catch(e){}
+          }
+        }
+      }
+    });
+  }
+
+  let previewGroup = null;
+  function buildPreview(){
+    previewGroup = new T.Group();
+    makeArch(previewGroup, {opacity:.88});
+    scene.add(previewGroup);
+  }
+
+  function buildStatic(){
+    state.started = true;
+    state.step = steps.length;
+    document.body.classList.add('playing');
+    camera.position.set(HOME_CAM.pos[0], HOME_CAM.pos[1], HOME_CAM.pos[2]);
+    controls.target.set(HOME_CAM.target[0], HOME_CAM.target[1], HOME_CAM.target[2]);
+    controls.update();
+    document.getElementById('intro').classList.add('hide');
+    controls.autoRotate = false;
+
+    makeArch(bridge);
+    buildTies();
+    buildBraces();
+    braces.forEach(function(m){ m.visible = true; m.material.opacity = 1; });
+    buildGallery(true, state.mode === 'detail');
+    gallery.visible = true;
+    updateShadows();
+    props.visible = false;
+    renderHUD();
+    viewsEl.classList.add('show');
+  }
+  if(QS.has('detail')){
+    buildSteps('detail');
+    buildStatic();
+  }else if(QS.has('built')){
+    buildStatic();
+  }else{
+    buildPreview();
+  }
+
+  if(QS.has('autodetail')){
+    setTimeout(function(){
+      start('detail');
+      const tick = setInterval(function(){
+        if(!document.getElementById('end').classList.contains('hide')){ clearInterval(tick); return; }
+        const cta = document.getElementById('cta');
+        if(cta.classList.contains('show')){
+          const b = document.getElementById('ctaBtn');
+          if(b) b.click();
+        }else if(state.active && !state.busy && !state.active.dragging){
+          state.active.mesh.position.copy(state.active.targetPos);
+          state.active.mesh.quaternion.copy(state.active.targetQuat);
+          placeActive();
+        }
+      }, 700);
+    }, 400);
+  }
+
+  if(QS.has('clean')){
+    document.querySelectorAll('header,#hud,#legend,#views,#tip,#cta,#toast,.veil').forEach(function(el){ el.style.display = 'none'; });
+  }
+  if(QS.has('view')) applyView(QS.get('view'));
+
+  /* ---------------------------------------------------------- 循环 */
+  let perfFrames = 0, perfTime = 0, perfDone = false;
+  function autoQuality(dt){
+    if(perfDone) return;
+    perfFrames++;
+    perfTime += dt;
+    if(perfTime < 2.5) return;
+    const fps = perfFrames / perfTime;
+    if(fps < 45){ qualityScale = .72; applyResolution(); }
+    if(fps < 28){ qualityScale = .58; applyResolution(); }
+    perfDone = true;
+  }
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), .05);
+    const t = clock.elapsedTime;
+
+    stepTweens(dt);
+    autoQuality(dt);
+    if(!cameraFocus) controls.update();
+    if(tweens.length) renderer.shadowMap.needsUpdate = true;
+    updateForce(t);
+    if(envUpdate) envUpdate(t);
+
+    if(state.active && !state.active.dragging){
+      state.active.ghost.material.opacity = .48 + Math.sin(t*2.6)*.12;
+    }
+    if(state.active){
+      const m = state.active.mesh;
+      m.material.emissiveIntensity = .45 + Math.sin(t*3.2)*.2;
+
+      if(t - tipTick > .05){
+        tipTick = t;
+        tipV.copy(m.position);
+        tipV.y += 1.1;
+        tipV.project(camera);
+        const x = (tipV.x * .5 + .5) * innerWidth;
+        const y = (-tipV.y * .5 + .5) * innerHeight;
+        if(Math.abs(x - tipLastX) > .5 || Math.abs(y - tipLastY) > .5){
+          tipEl.style.transform = 'translate(-50%,-115%) translate(' + x + 'px,' + y + 'px)';
+          tipLastX = x; tipLastY = y;
+        }
+        const txt = state.active.dragging ? '松手入卯' : '拖动 · 放进红框';
+        if(txt !== tipLastText){ tipEl.textContent = txt; tipLastText = txt; }
+      }
+      tipEl.classList.add('show');
+    }else{
+      tipEl.classList.remove('show');
+    }
+    if(loadBlock && state.force){
+      loadBlock.material.emissiveIntensity = .4 + Math.sin(t*1.6)*.1;
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', function(){
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    applyResolution();
+    canvasRect = renderer.domElement.getBoundingClientRect();
+  });
+
+  window.__proto = {camera:camera, controls:controls, state:state, setForce:setForce, archForces:archForces, bridge:bridge, renderer:renderer, scene:scene, preview:function(){ return previewGroup; }};
+})();
+</script>
+</body>
+</html>
