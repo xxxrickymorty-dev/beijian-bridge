@@ -96,7 +96,7 @@ python serve.py 8766
   - 自动入卯：移动端挪到屏幕中部 `top:50%`（与 CTA 同槽——CTA 只在动作步出现、自动入卯只在拖拽步出现，互斥不同现，且隐藏的 CTA 是 opacity+pointer-events:none 不会挡点击）；桌面保持底部居中不变。已验证 390×844 下按钮中心 (195, 422)，HUD 顶 665，零重叠。
   - 语音默认关：`state.voice` 默认 false、按钮初始「语音 · 关」；首次点按打开并播「语音已打开」。
   - 注意：用户手机看的是 github.io 部署版，改完要重新部署才生效。
-- **部署（2026-10-24）**：本地已是 git 仓库（origin = taishun-langqiao，Pages 已开，https://xxxrickymorty-dev.github.io/taishun-langqiao/ 就是手机看的那条地址）。本机网络 `github.com:443` 被挡但 `api.github.com` 通——git push 失败时改走 REST API：单文件 PUT /contents，新仓库用 git/blobs → git/trees → git/commits → PATCH refs（空仓库要先 PUT 一个 README 初始化）。本轮已把三个改动文件 API 推上 taishun-langqiao，并新建了 beijian-bridge（同内容，Pages 已启用）。**待办：网络通时 `git pull --rebase origin main && git push`，让本地提交历史与远端对齐（API 提交与本地 81f9b6a 内容相同）。**
+- **部署（2026-10-24）**：本地已是 git 仓库（origin = taishun-langqiao，Pages 已开，https://xxxrickymorty-dev.github.io/taishun-langqiao/ 就是手机看的那条地址）。本机网络 `github.com:443` 被挡但 `api.github.com` 通——git push 失败时改走 REST API：单文件 PUT /contents，新仓库用 git/blobs → git/trees → git/commits → PATCH refs（空仓库要先 PUT 一个 README 初始化）。本轮已把三个改动文件 API 推上 taishun-langqiao，并新建了 beijian-bridge（同内容，Pages 已启用）。已对齐（2026-10-24）：代理(127.0.0.1:7897)下 `git pull --rebase` + push，两仓 main 均在 ff97d2d。本仓库配置了局部代理 `git config http.proxy http://127.0.0.1:7897`——代理关掉后推送会失败，届时 `git config --unset http.proxy` 移除，或改用 REST API 路线。
 - **2026-10-23 夜三（用户反馈：特写太快看不清 + 图二空中两个悬空物）**：
   - `precision-roof.js buildOrnament` 的鸱吻悬空 1.1 m 根因：它的几何是局部坐标、mesh.position 摆在 ±26.11，而主文件压纵坡用的是 `camberAt(几何局部 x)` ≈ 0——瓦垄/脊梁是世界坐标几何所以沉了，唯独鸱吻没沉。修法：`geo.translate(世界x, …)` 把世界 x 烘进几何、mesh.position 归零。复验：±26.11, y 11.54 → 10.44，正坐在脊梁端（顶 10.26）上。
   - 节点特写改节奏：进 0.9s / 驻留 2.6s / 回 0.9s（原 0.6/1.1/0.7），匠作落位后停 4700ms（节点特写关时仍 2400）；剪刀苗/横串步骤的 withFocus 同步 4700。
